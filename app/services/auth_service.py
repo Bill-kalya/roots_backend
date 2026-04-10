@@ -355,6 +355,7 @@ class AuthService:
             "user": UserResponse.model_validate(user),
             "tokens": tokens,
             "session_id": session_id,
+            "role": user.role.value,  # Include role in response
             "requires_mfa": False
         }
     
@@ -366,11 +367,17 @@ class AuthService:
     ) -> Dict[str, str]:
         """Create JWT tokens with binding"""
         
+        # Get user to include role in token
+        query = select(User).where(User.id == user_id)
+        result = await self.db.execute(query)
+        user = result.scalar_one()
+        
         # Create access token with additional claims
         access_token = create_access_token({
             "sub": str(user_id),
             "session_id": session_id,
             "fingerprint": fingerprint,
+            "role": user.role.value,  # Include role in token
             "type": "access"
         })
         
@@ -379,6 +386,7 @@ class AuthService:
             "sub": str(user_id),
             "session_id": session_id,
             "fingerprint": fingerprint,
+            "role": user.role.value,
             "type": "refresh"
         })
         

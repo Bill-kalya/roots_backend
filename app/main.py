@@ -20,7 +20,11 @@ from app.middleware.rate_limit import rate_limit_middleware
 from app.middleware.circuit_breaker import circuit_breakers
 from app.monitoring.health import router as health_router
 from app.core.metrics import get_metrics
-from app.api.routes import auth, products, cart, orders, testimonials, newsletter
+from app.api.routes import auth, newsletter, testimonials, products as public_products
+# Role-based route imports
+from app.api.routes.user import products as user_products, profile as user_profile, orders as user_orders
+from app.api.routes.merchant import products as merchant_products, orders as merchant_orders, analytics as merchant_analytics
+from app.api.routes.admin import dashboard as admin_dashboard, users as admin_users, products as admin_products, settings as admin_settings
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +73,7 @@ async def lifespan(app: FastAPI):
     """Enterprise lifecycle management with graceful shutdown"""
     
     # Startup
-    logger.info("🚀 Starting Roots Backend - Enterprise Edition")
+logger.info("🚀 Starting Roots Backend - Enterprise Edition with RBAC")
     start_time = datetime.utcnow()
     
     try:
@@ -120,9 +124,9 @@ async def run_cart_expiration(cart_service):
 
 # Create FastAPI app
 app = FastAPI(
-    title="Roots API - Enterprise Edition",
+    title="Roots API - Enterprise Edition with RBAC",
     version="2.0.0",
-    description="Enterprise e-commerce backend with high availability",
+    description="Enterprise E-commerce Backend with Role-Based Access Control",
     docs_url="/api/docs",
     redoc_url="/api/redoc",
     openapi_url="/api/openapi.json",
@@ -218,22 +222,45 @@ async def metrics():
 # Health endpoints
 app.include_router(health_router, prefix="/health", tags=["Health"])
 
-# Business endpoints
+# ============ PUBLIC ROUTES (No Authentication) ============
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
-app.include_router(products.router, prefix="/api/products", tags=["Products"])
-app.include_router(cart.router, prefix="/api/cart", tags=["Cart"])
-app.include_router(orders.router, prefix="/api/orders", tags=["Orders"])
-app.include_router(testimonials.router, prefix="/api/testimonials", tags=["Testimonials"])
 app.include_router(newsletter.router, prefix="/api/newsletter", tags=["Newsletter"])
+app.include_router(testimonials.router, prefix="/api/testimonials", tags=["Testimonials"])
+app.include_router(public_products.router, prefix="/api/products", tags=["Public Products"])
+
+# ============ USER ROUTES (Authenticated Users) ============
+app.include_router(user_products.router, prefix="/api/user/products", tags=["User - Products"])
+app.include_router(user_profile.router, prefix="/api/user/profile", tags=["User - Profile"])
+app.include_router(user_orders.router, prefix="/api/user/orders", tags=["User - Orders"])
+
+# ============ MERCHANT ROUTES (Merchant Role Required) ============
+app.include_router(merchant_products.router, prefix="/api/merchant/products", tags=["Merchant - Products"])
+app.include_router(merchant_orders.router, prefix="/api/merchant/orders", tags=["Merchant - Orders"])
+app.include_router(merchant_analytics.router, prefix="/api/merchant/analytics", tags=["Merchant - Analytics"])
+
+# ============ ADMIN ROUTES (Admin Role Required) ============
+app.include_router(admin_dashboard.router, prefix="/api/admin/dashboard", tags=["Admin - Dashboard"])
+app.include_router(admin_users.router, prefix="/api/admin/users", tags=["Admin - Users"])
+app.include_router(admin_products.router, prefix="/api/admin/products", tags=["Admin - Products"])
+app.include_router(admin_settings.router, prefix="/api/admin/settings", tags=["Admin - Settings"])
+
+@app.get("/health")
+async def health():
+    return {
+        "status": "healthy",
+        "service": "roots-backend",
+        "version": "2.0.0",
+        "rbac_enabled": True
+    }
 
 @app.get("/")
 async def root():
     return {
-        "service": "Roots Backend",
+        "message": "Roots Backend API with RBAC",
         "version": "2.0.0",
-        "environment": settings.ENVIRONMENT if hasattr(settings, 'ENVIRONMENT') else "production",
-        "status": "operational",
-        "timestamp": datetime.utcnow().isoformat()
+        "roles": ["USER", "MERCHANT", "ADMIN"],
+        "docs": "/docs",
+        "health": "/health"
     }
 
 if __name__ == "__main__":

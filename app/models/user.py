@@ -1,8 +1,14 @@
-from sqlalchemy import Column, String, Boolean, DateTime, Integer, JSON
+from sqlalchemy import Column, String, Boolean, DateTime, Integer, JSON, Enum, Text
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
 from datetime import datetime
+from enum import Enum as PyEnum
 from app.db.base import Base, TimestampMixin
+
+class UserRole(PyEnum):
+    USER = "USER"
+    MERCHANT = "MERCHANT"
+    ADMIN = "ADMIN"
 
 class User(Base, TimestampMixin):
     __tablename__ = "users"
@@ -13,13 +19,15 @@ class User(Base, TimestampMixin):
     hashed_password = Column(String(255), nullable=False)
     full_name = Column(String(255), nullable=False)
     
+    # Role Management
+    role = Column(Enum(UserRole), default=UserRole.USER, nullable=False)
+    
     # Account status
     is_active = Column(Boolean, default=True)
-    is_admin = Column(Boolean, default=False)
     is_verified = Column(Boolean, default=False)
     verification_token = Column(String(255), nullable=True)
     
-    # Security fields - Failed login tracking
+    # Security fields
     failed_login_attempts = Column(Integer, default=0)
     last_failed_login = Column(DateTime, nullable=True)
     account_locked_until = Column(DateTime, nullable=True)
@@ -27,35 +35,52 @@ class User(Base, TimestampMixin):
     
     # Session management
     last_login = Column(DateTime, nullable=True)
-    last_login_ip = Column(String(45), nullable=True)  # IPv6 ready
+    last_login_ip = Column(String(45), nullable=True)
     last_login_user_agent = Column(String(500), nullable=True)
-    current_session_id = Column(String(255), nullable=True)
     
-    # MFA support
-    mfa_enabled = Column(Boolean, default=False)
-    mfa_secret = Column(String(255), nullable=True)
-    mfa_backup_codes = Column(JSON, nullable=True)  # Store hashed backup codes
+    # Merchant specific fields
+    merchant_approved = Column(Boolean, default=False)
+    merchant_details = Column(JSON, nullable=True)
+    store_name = Column(String(255), nullable=True)
+    store_description = Column(Text, nullable=True)
     
     # Password reset
     password_reset_token = Column(String(255), nullable=True)
     password_reset_expires = Column(DateTime, nullable=True)
     password_updated_at = Column(DateTime, nullable=True)
-    previous_passwords = Column(JSON, nullable=True, default=list)  # Store hashes of last 5 passwords
-    
-    # Device tracking
-    trusted_devices = Column(JSON, nullable=True, default=list)  # Device fingerprints
+    previous_passwords = Column(JSON, nullable=True, default=list)
     
     # Audit fields
     created_by_ip = Column(String(45), nullable=True)
     account_created_at = Column(DateTime, default=datetime.utcnow)
     last_activity = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Account flags
-    is_deleted = Column(Boolean, default=False)
-    deleted_at = Column(DateTime, nullable=True)
+    def has_role(self, required_roles: list) -> bool:
+        """Check if user has required role"""
+        return self.role.value in required_roles
+    
+    def is_admin(self) -> bool:
+        return self.role == UserRole.ADMIN
+    
+    def is_merchant(self) -> bool:
+        return self.role == UserRole.MERCHANT
+    
+    def is_user(self) -> bool:
+        return self.role == UserRole.USER
+    
+    def promote_to_merchant(self, store_name: str = None, store_description: str = None):
+        """Promote user to merchant"""
+        self.role = UserRole.MERCHANT
+        self.store_name = store_name
+        self.store_description = store_description
+        self.merchant_approved = True
+    
+    def promote_to_admin(self):
+        """Promote user to admin"""
+        self.role = UserRole.ADMIN
     
     def lock_account(self, reason: str, duration_minutes: int = 30):
-        """Lock user account for security reasons"""
+        """Lock user account"""
         from datetime import timedelta
         self.is_active = False
         self.account_locked_until = datetime.utcnow() + timedelta(minutes=duration_minutes)

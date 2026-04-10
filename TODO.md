@@ -1,11 +1,13 @@
-# Fix ProductService missing get_products_by_tag startup error
+# Fix DB Session Error in add_role_to_users.py
 
-## Steps to complete:
-- [x] 1. Add `get_products_by_tag` method to app/services/product_service.py ✅
-- [x] 2. Fix category caching lambda in app/cache/cache_strategies.py to use proper instance method with db session ✅
-- [x] 3. Test server startup: Ctrl+C && uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 ✅
-- [x] 4. Verify logs show cache warming success and no errors ✅
+## Steps:
+- [x] Step 1: Analyzed files (add_role_to_users.py, app/db/session.py, app/core/config.py)
+- [x] Step 2: Created detailed edit plan and got user approval
+- [x] Step 3: Created TODO.md 
+- [x] Step 4: Updated add_role_to_users.py with db_manager.init()
+- [x] Step 5: ✅ FIXED TypeError! DB initializes successfully. Now handling "users.role does not exist" - running Alembic migration
+- [ ] Step 6: Re-test dry-run after migration
+- [ ] Step 7: Run main to add roles
+- [ ] Step 8: Complete task
 
-## Status
-✅ Startup error fixed! Server should start without AttributeError.
-- [x] Plan approved ✅
+**Status:** DB init fixed. Applying schema migration...

@@ -78,7 +78,9 @@ def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
+    """Create JWT token with role information"""
     to_encode = data.copy()
+    
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
@@ -90,23 +92,25 @@ def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta]
         "iss": settings.JWT_ISSUER,
         "aud": settings.JWT_AUDIENCE
     })
+    
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
-def create_refresh_token(data: Dict[str, Any], binding: str = None) -> str:
+def create_refresh_token(data: Dict[str, Any]) -> str:
+    """Create refresh token"""
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     to_encode.update({
         "exp": expire,
         "type": "refresh",
         "iss": settings.JWT_ISSUER,
-        "aud": settings.JWT_AUDIENCE,
-        "binding": binding
+        "aud": settings.JWT_AUDIENCE
     })
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
 def decode_token(token: str) -> Optional[Dict[str, Any]]:
+    """Decode JWT token"""
     try:
         payload = jwt.decode(
             token, 

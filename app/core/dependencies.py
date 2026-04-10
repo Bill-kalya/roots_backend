@@ -1,81 +1,161 @@
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import Depends, HTTPException, status, Request
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
-from redis import asyncio as aioredis
+from sqlalchemy import select
 from typing import Optional
-from jose import JWTError
-
+from app.core.security import decode_token, TokenBlacklist
 from app.db.session import get_db
-from app.core.config import settings
-from app.core.security import decode_token
-from app.models.user import User
-from app.services.auth_service import AuthService
+from app.models.user import User, UserRole
+from app.cache.redis_manager import redis_manager
+import logging
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
+logger = logging.getLogger(__name__)
 
-async def get_redis() -> aioredis.Redis:
-    """Get Redis client from app state"""
-    from app.main import app
-    return app.state.redis
+security = HTTPBearer(auto_error=False)
+
+# Initialize token blacklist
+token_blacklist = TokenBlacklist(redis_manager._client) if redis_manager._client else None
 
 async def get_current_user(
-    token: Optional[str] = Depends(oauth2_scheme),
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
     db: AsyncSession = Depends(get_db)
 ) -> Optional[User]:
-    """Get current user from JWT token"""
-    if not token:
+    """Get current user from JWT token with database validation"""
+    
+    if not credentials:
         return None
     
+    token = credentials.credentials
+    
+    # Check if token is blacklisted
+    if token_blacklist and await token_blacklist.is_blacklisted(token):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has been revoked"
+        )
+    
+    # Decode token
     payload = decode_token(token)
     if not payload or payload.get("type") != "access":
-        return None
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token"
+        )
     
     user_id = payload.get("sub")
     if not user_id:
-        return None
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload"
+        )
     
+    # Get user from database
     from uuid import UUID
     try:
-        user_id = UUID(user_id)
+        user_uuid = UUID(user_id)
     except ValueError:
-        return None
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid user ID"
+        )
     
-    auth_service = AuthService(db)
-    user = await auth_service.get_user_by_id(user_id)
+    query = select(User).where(User.id == user_uuid, User.is_active == True)
+    result = await db.execute(query)
+    user = result.scalar_one_or_none()
     
-    if not user or not user.is_active:
-        return None
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found or inactive"
+        )
+    
+    # Verify role from token matches database (security)
+    token_role = payload.get("role")
+    if token_role != user.role.value:
+        logger.warning(f"Role mismatch for user {user.email}: token={token_role}, db={user.role.value}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token claims"
+        )
     
     return user
 
-async def get_current_active_user(
-    current_user: User = Depends(get_current_user)
-) -> User:
-    """Get current user or raise 401"""
+# Role-based access control decorators
+
+async def require_any_user(current_user: User = Depends(get_current_user)) -> User:
+    """Require authenticated user (any role)"""
     if not current_user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated",
-            headers={"WWW-Authenticate": "Bearer"},
+            detail="Authentication required"
         )
     return current_user
 
-async def get_current_admin_user(
-    current_user: User = Depends(get_current_active_user)
-) -> User:
-    """Get current admin user or raise 403"""
-    if not current_user.is_admin:
+async def require_user(current_user: User = Depends(get_current_user)) -> User:
+    """Require USER role"""
+    if not current_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
+        )
+    
+    if current_user.role not in [UserRole.USER, UserRole.MERCHANT, UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin privileges required"
+            detail="User access required"
         )
+    
     return current_user
 
-def cache_response(ttl: int = 300):
-    """Decorator for caching API responses"""
-    def decorator(func):
-        async def wrapper(*args, **kwargs):
-            # This is a placeholder - implement as needed
-            return await func(*args, **kwargs)
-        return wrapper
-    return decorator
+async def require_merchant(current_user: User = Depends(get_current_user)) -> User:
+    """Require MERCHANT role"""
+    if not current_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
+        )
+    
+    if current_user.role not in [UserRole.MERCHANT, UserRole.ADMIN]:
+        logger.warning(f"Unauthorized merchant access attempt by {current_user.email} (role: {current_user.role.value})")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Merchant access required"
+        )
+    
+    if current_user.role == UserRole.MERCHANT and not current_user.merchant_approved:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Merchant account pending approval"
+        )
+    
+    return current_user
+
+async def require_admin(current_user: User = Depends(get_current_user)) -> User:
+    """Require ADMIN role"""
+    if not current_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
+        )
+    
+    if current_user.role != UserRole.ADMIN:
+        logger.warning(f"Unauthorized admin access attempt by {current_user.email} (role: {current_user.role.value})")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required"
+        )
+    
+    return current_user
+
+# Optional: Rate limiting by role
+async def get_rate_limit_config(user: Optional[User] = Depends(get_current_user)) -> dict:
+    """Get rate limit config based on user role"""
+    if not user:
+        return {"requests": 50, "period": 60}  # Anonymous users
+    
+    if user.role == UserRole.ADMIN:
+        return {"requests": 500, "period": 60}  # Admins: high limit
+    elif user.role == UserRole.MERCHANT:
+        return {"requests": 200, "period": 60}  # Merchants: medium limit
+    else:
+        return {"requests": 100, "period": 60}  # Regular users: standard limit
