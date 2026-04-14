@@ -20,7 +20,7 @@ from app.middleware.rate_limit import rate_limit_middleware
 from app.middleware.circuit_breaker import circuit_breakers
 from app.monitoring.health import router as health_router
 from app.core.metrics import get_metrics
-from app.api.routes import auth, newsletter, testimonials, products as public_products
+from app.api.routes import auth, newsletter, testimonials, products as public_products, cart
 # Role-based route imports
 from app.api.routes.user import products as user_products, profile as user_profile, orders as user_orders
 from app.api.routes.merchant import products as merchant_products, orders as merchant_orders, analytics as merchant_analytics
@@ -73,13 +73,15 @@ async def lifespan(app: FastAPI):
     """Enterprise lifecycle management with graceful shutdown"""
     
     # Startup
-logger.info("🚀 Starting Roots Backend - Enterprise Edition with RBAC")
+    logger.info("🚀 Starting Roots Backend - Enterprise Edition with RBAC")
     start_time = datetime.utcnow()
     
     try:
         # Initialize connections
         await db_manager.initialize()
         await redis_manager.initialize()
+        
+        app.state.redis = redis_manager._client  # Expose for middleware
         
         # Start background health monitor
         from app.monitoring.alerts import system_health_monitor
@@ -126,6 +128,7 @@ async def run_cart_expiration(cart_service):
 app = FastAPI(
     title="Roots API - Enterprise Edition with RBAC",
     version="2.0.0",
+    redirect_slashes=False,
     description="Enterprise E-commerce Backend with Role-Based Access Control",
     docs_url="/api/docs",
     redoc_url="/api/redoc",
@@ -157,10 +160,25 @@ app.add_middleware(
     max_age=3600  # Cache preflight requests for 1 hour
 )
 
+# Debug endpoint for CORS verification
+from app.core.config import settings
+
+@app.get("/debug/cors")
+async def debug_cors():
+    return {
+        "cors_origins": settings.CORS_ORIGINS,
+        "type": type(settings.CORS_ORIGINS).__name__,
+        "count": len(settings.CORS_ORIGINS)
+    }
+
 # Custom middleware for metrics and rate limiting
 @app.middleware("http")
 async def enterprise_middleware(request: Request, call_next):
     """Combined middleware for metrics, rate limiting, and tracing"""
+    
+    # Let CORS preflight pass through untouched
+    if request.method == "OPTIONS":
+        return await call_next(request)
     
     start_time = datetime.utcnow()
     
@@ -229,6 +247,7 @@ app.include_router(testimonials.router, prefix="/api/testimonials", tags=["Testi
 app.include_router(public_products.router, prefix="/api/products", tags=["Public Products"])
 
 # ============ USER ROUTES (Authenticated Users) ============
+app.include_router(cart.router, prefix="/api/cart", tags=["Cart"])
 app.include_router(user_products.router, prefix="/api/user/products", tags=["User - Products"])
 app.include_router(user_profile.router, prefix="/api/user/profile", tags=["User - Profile"])
 app.include_router(user_orders.router, prefix="/api/user/orders", tags=["User - Orders"])

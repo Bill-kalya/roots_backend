@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from uuid import UUID
 from decimal import Decimal
 from datetime import datetime
@@ -17,6 +17,7 @@ class ProductCreate(ProductBase):
     is_featured: bool = False
 
 class ProductResponse(ProductBase):
+    model_config = ConfigDict(from_attributes=True)
     id: UUID
     is_featured: bool
     is_active: bool

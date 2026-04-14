@@ -7,6 +7,8 @@ from app.core.security import decode_token, TokenBlacklist
 from app.db.session import get_db
 from app.models.user import User, UserRole
 from app.cache.redis_manager import redis_manager
+from redis import asyncio as aioredis
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -159,3 +161,13 @@ async def get_rate_limit_config(user: Optional[User] = Depends(get_current_user)
         return {"requests": 200, "period": 60}  # Merchants: medium limit
     else:
         return {"requests": 100, "period": 60}  # Regular users: standard limit
+
+
+async def get_redis():
+    """Get Redis client dependency"""
+    return redis_manager._client
+
+
+# Aliases for backwards compatibility
+get_current_active_user = require_any_user
+get_current_admin_user = require_admin

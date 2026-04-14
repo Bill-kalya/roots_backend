@@ -1,4 +1,6 @@
 from typing import List, Optional
+import json
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
 from pydantic import ConfigDict, PostgresDsn, field_validator
 from functools import lru_cache
@@ -29,6 +31,8 @@ class Settings(BaseSettings):
     REDIS_RETRY_ON_TIMEOUT: bool = True
     REDIS_HEALTH_CHECK_INTERVAL: int = 30
     
+    REDIS_CART_TTL: int = 604800  # 7 days
+    
     # Redis Cluster Support (for production)
     REDIS_CLUSTER_NODES: Optional[List[str]] = None
     REDIS_CLUSTER: bool = False
@@ -42,10 +46,33 @@ class Settings(BaseSettings):
     JWT_AUDIENCE: str = "roots-client"
     
     # Security Headers
-    CORS_ORIGINS: List[str] = []
+    CORS_ORIGINS: List[str] = ["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173"]
+    
+    @field_validator("CORS_ORIGINS", mode="before")
+    @classmethod
+    def parse_cors(cls, v):
+        if isinstance(v, str):
+            try:
+                import json
+                return json.loads(v)
+            except Exception:
+                return [i.strip() for i in v.split(",") if i.strip()]
+        return v
+
+    @field_validator("CORS_METHODS", "CORS_HEADERS", mode="before")
+    @classmethod
+    def parse_cors_lists(cls, v):
+        if isinstance(v, str):
+            try:
+                import json
+                return json.loads(v)
+            except Exception:
+                return [i.strip() for i in v.split(",") if i.strip()]
+        return v
+    
     CORS_CREDENTIALS: bool = True
     CORS_METHODS: List[str] = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
-    CORS_HEADERS: List[str] = ["*"]
+    CORS_HEADERS: List[str] = ["Authorization", "Content-Type", "Accept"]
     
     # Rate Limiting
     RATE_LIMIT_ENABLED: bool = True
@@ -96,3 +123,4 @@ def get_settings() -> Settings:
     return Settings()
 
 settings = get_settings()
+

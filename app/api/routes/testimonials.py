@@ -24,7 +24,7 @@ class TestimonialCreate(BaseModel):
     text: str
     location: str | None = None
 
-@router.get("/", response_model=List[TestimonialResponse])
+@router.get("", response_model=List[TestimonialResponse])
 async def get_testimonials(
     limit: int = Query(10, ge=1, le=50),
     db: AsyncSession = Depends(get_db)
@@ -50,7 +50,7 @@ async def get_testimonials(
         for t in testimonials
     ]
 
-@router.post("/", response_model=ResponseModel)
+@router.post("", response_model=ResponseModel)
 async def create_testimonial(
     testimonial: TestimonialCreate,
     db: AsyncSession = Depends(get_db)

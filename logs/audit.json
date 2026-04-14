@@ -54,3 +54,147 @@
 {"message": "Redis connection initialized successfully", "timestamp": "2026-04-09T18:17:15.251713", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
 {"message": "System health monitor started (interval: 60s)", "timestamp": "2026-04-09T18:17:15.416259", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
 {"message": "\u2705 All services initialized in 1.75s", "timestamp": "2026-04-09T18:17:16.881937", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-04-12T14:38:05.608542", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-04-12T14:38:06.041836", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-04-12T14:38:06.131697", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-04-12T14:38:06.139125", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 3.42s", "timestamp": "2026-04-12T14:38:09.034623", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-04-12T14:38:20.899063", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-04-12T14:38:20.996298", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-04-12T14:38:21.030232", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-04-12T14:38:21.033845", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 0.81s", "timestamp": "2026-04-12T14:38:21.710613", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-04-12T14:41:17.533629", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-04-12T14:41:25.272028", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-04-12T14:42:40.381163", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-04-12T14:42:40.603523", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-04-12T14:42:40.628519", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-04-12T14:42:40.632521", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 0.69s", "timestamp": "2026-04-12T14:42:41.071784", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Expired 0 old carts", "timestamp": "2026-04-12T15:42:40.649242", "level": "INFO", "logger": "app.services.cart_service", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-04-12T16:39:04.327627", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Expired 0 old carts", "timestamp": "2026-04-12T16:42:40.672324", "level": "INFO", "logger": "app.services.cart_service", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-04-12T16:42:56.275929", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-04-12T16:43:08.601870", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-04-12T16:45:36.815204", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-04-12T16:45:36.956464", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-04-12T16:45:36.999804", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-04-12T16:45:37.003417", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 1.60s", "timestamp": "2026-04-12T16:45:38.413653", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Expired 0 old carts", "timestamp": "2026-04-12T17:45:37.015328", "level": "INFO", "logger": "app.services.cart_service", "service": "roots-backend"}
+{"message": "Expired 0 old carts", "timestamp": "2026-04-12T18:45:37.023324", "level": "INFO", "logger": "app.services.cart_service", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-04-13T11:57:40.675425", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-04-13T11:57:40.764615", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-04-13T11:57:40.795130", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-04-13T11:57:40.800236", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 1.00s", "timestamp": "2026-04-13T11:57:41.674992", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-04-13T12:07:42.693567", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-04-13T12:09:10.504405", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-04-13T12:09:12.672335", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-04-13T12:10:35.889902", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-04-13T12:10:35.970764", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-04-13T12:10:35.995034", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-04-13T12:10:36.000597", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 0.98s", "timestamp": "2026-04-13T12:10:36.867238", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-04-13T12:17:00.754706", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-04-13T12:18:30.172472", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-04-13T12:18:30.249965", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-04-13T12:18:30.279888", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-04-13T12:18:30.283340", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 0.84s", "timestamp": "2026-04-13T12:18:31.010171", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-04-13T12:26:15.451019", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-04-13T12:27:16.095307", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-04-13T12:27:16.182092", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-04-13T12:27:16.217034", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-04-13T12:27:16.220024", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 1.17s", "timestamp": "2026-04-13T12:27:17.263808", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-04-13T12:35:20.891328", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-04-13T12:35:20.969830", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-04-13T12:35:21.009901", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-04-13T12:35:21.014871", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 1.45s", "timestamp": "2026-04-13T12:35:22.343308", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-04-13T12:37:30.367630", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-04-13T12:37:30.496256", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-04-13T12:37:30.525499", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-04-13T12:37:30.529631", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 0.80s", "timestamp": "2026-04-13T12:37:31.172055", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-04-13T12:39:16.008910", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-04-13T12:53:19.541637", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-04-13T12:53:19.645491", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-04-13T12:53:19.691053", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-04-13T12:53:19.695648", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 1.35s", "timestamp": "2026-04-13T12:53:20.890239", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-04-13T12:53:37.812312", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-04-13T12:56:59.386564", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-04-13T12:56:59.466099", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-04-13T12:56:59.500035", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-04-13T12:56:59.504155", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 0.46s", "timestamp": "2026-04-13T12:56:59.846077", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-04-13T13:06:02.294632", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-04-13T13:09:30.634979", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-04-13T13:17:02.722469", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-04-13T13:17:02.821526", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-04-13T13:17:02.852441", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-04-13T13:17:02.857078", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 1.83s", "timestamp": "2026-04-13T13:17:04.554414", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-04-13T13:21:29.805844", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-04-13T13:22:11.996221", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-04-13T13:22:35.259927", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-04-13T13:22:35.341950", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-04-13T13:22:35.368482", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-04-13T13:22:35.373737", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 1.25s", "timestamp": "2026-04-13T13:22:36.513228", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-04-13T13:34:39.517012", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-04-13T13:41:06.153792", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-04-13T13:41:06.245652", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-04-13T13:41:06.310335", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-04-13T13:41:06.315182", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 1.36s", "timestamp": "2026-04-13T13:41:07.514260", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-04-13T13:53:21.596762", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Expired 0 old carts", "timestamp": "2026-04-13T14:41:06.328720", "level": "INFO", "logger": "app.services.cart_service", "service": "roots-backend"}
+{"message": "Expired 0 old carts", "timestamp": "2026-04-13T15:41:06.342709", "level": "INFO", "logger": "app.services.cart_service", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-04-13T16:19:33.317470", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-04-13T16:20:30.133864", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-04-13T16:20:30.303295", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-04-13T16:20:30.366796", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-04-13T16:20:30.374574", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 3.15s", "timestamp": "2026-04-13T16:20:33.299520", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-04-13T16:48:26.952448", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-04-14T07:00:21.620401", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-04-14T07:00:21.910092", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-04-14T07:00:21.967963", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-04-14T07:00:21.972484", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 2.33s", "timestamp": "2026-04-14T07:00:23.948426", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-04-14T07:03:40.636022", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-04-14T07:05:00.060962", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-04-14T07:05:00.318412", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-04-14T07:05:00.363593", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-04-14T07:05:00.367501", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 0.86s", "timestamp": "2026-04-14T07:05:00.920962", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-04-14T07:16:39.161567", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-04-14T07:53:00.407070", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-04-14T07:53:00.715420", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-04-14T07:53:00.762208", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-04-14T07:53:00.769950", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 1.68s", "timestamp": "2026-04-14T07:53:02.087368", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-04-14T08:34:50.099763", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-04-14T08:36:28.688221", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-04-14T08:36:28.770328", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-04-14T08:36:28.805046", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-04-14T08:36:28.812549", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 0.90s", "timestamp": "2026-04-14T08:36:29.589483", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-04-14T08:56:32.796203", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-04-14T09:13:22.311022", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-04-14T09:14:03.327306", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-04-14T09:14:03.416413", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-04-14T09:14:03.443787", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-04-14T09:14:03.448001", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 1.21s", "timestamp": "2026-04-14T09:14:04.541532", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-04-14T09:20:47.684821", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-04-14T09:24:15.840380", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-04-14T09:24:15.923267", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-04-14T09:24:15.945851", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-04-14T09:24:15.950818", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 1.15s", "timestamp": "2026-04-14T09:24:16.992776", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-04-14T09:31:44.055997", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-04-14T09:34:25.147109", "level": "INFO", "logger": "app.main", "service": "roots-backend"}

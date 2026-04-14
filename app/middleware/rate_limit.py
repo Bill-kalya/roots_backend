@@ -2,8 +2,10 @@ from fastapi import Request, HTTPException, status
 from fastapi.responses import JSONResponse
 from typing import Dict, Tuple
 import time
+import logging
 from redis import asyncio as aioredis
 from app.core.config import settings
+logger = logging.getLogger(__name__)
 
 class RateLimiter:
     """Token bucket rate limiter with Redis"""
@@ -74,7 +76,14 @@ async def rate_limit_middleware(request: Request, call_next):
     config = RATE_LIMIT_CONFIGS.get(path, RATE_LIMIT_CONFIGS["default"])
     
     # Check rate limit
-    redis = request.app.state.redis
+    redis = getattr(request.app.state, "redis", None)
+    if redis is None:
+        logger.warning("Redis unavailable, skipping rate limiting")
+        response = await call_next(request)
+        return response
+
+    limiter = RateLimiter(redis)
+
     limiter = RateLimiter(redis)
     limited, headers = await limiter.is_rate_limited(
         key,
