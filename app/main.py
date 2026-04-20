@@ -14,6 +14,7 @@ import uvicorn
 from app.core.config import settings
 from app.core.logging import setup_logging
 from app.db.session import db_manager
+from app.db.migrate import run_migrations
 from app.cache.redis_manager import redis_manager
 from app.middleware.request_id import RequestIDMiddleware
 from app.middleware.rate_limit import rate_limit_middleware
@@ -77,6 +78,9 @@ async def lifespan(app: FastAPI):
     start_time = datetime.utcnow()
     
     try:
+        # 🔥 RUN MIGRATIONS FIRST
+        run_migrations()
+
         # Initialize connections
         await db_manager.initialize()
         await redis_manager.initialize()

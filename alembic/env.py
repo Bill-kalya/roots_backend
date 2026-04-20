@@ -1,4 +1,5 @@
 import asyncio
+import os
 from logging.config import fileConfig
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
@@ -11,10 +12,21 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.db.base import Base
 from app.core.config import settings
-from app.models import *
+from app.models.user import User
+from app.models.product import Product
+from app.models.order import Order, OrderItem
+from app.models.testimonial import Testimonial
+from app.models.newsletter import NewsletterSubscriber
 
 config = context.config
-config.set_main_option("sqlalchemy.url", str(settings.DATABASE_URL))
+
+def get_url():
+    url = settings.DATABASE_URL
+    if url.startswith("postgresql://"):
+        url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    return url
+
+config.set_main_option("sqlalchemy.url", get_url())
 
 # if config.config_file_name is not None:
 #     fileConfig(config.config_file_name)
