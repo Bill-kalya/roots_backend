@@ -39,11 +39,8 @@ class Settings(BaseSettings):
     def validate_database_url(cls, v: Optional[str]) -> Optional[str]:
         if v is None:
             return v
-        if not v.startswith("postgresql+asyncpg://"):
-            raise ValueError(
-                f"DATABASE_URL must use asyncpg driver "
-                f"(postgresql+asyncpg://...). Got: {v[:30]}..."
-            )
+        if v.startswith("postgresql://"):
+            v = v.replace("postgresql://", "postgresql+asyncpg://", 1)
         return v
 
     # =========================================================================
