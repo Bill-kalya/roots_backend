@@ -5,6 +5,7 @@ import json
 import logging
 import time
 from contextlib import asynccontextmanager
+import os
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -18,31 +19,8 @@ class RedisManager:
         
     async def initialize(self):
         """Initialize Redis connection"""
-        if settings.REDIS_CLUSTER and settings.REDIS_CLUSTER_NODES:
-            # Cluster mode for production
-            from redis.asyncio.cluster import RedisCluster
-            self._cluster_client = RedisCluster(
-                startup_nodes=settings.REDIS_CLUSTER_NODES,
-                decode_responses=True,
-                max_connections=settings.REDIS_MAX_CONNECTIONS,
-                socket_timeout=settings.REDIS_SOCKET_TIMEOUT,
-                socket_connect_timeout=settings.REDIS_SOCKET_CONNECT_TIMEOUT,
-                retry_on_timeout=settings.REDIS_RETRY_ON_TIMEOUT,
-                health_check_interval=settings.REDIS_HEALTH_CHECK_INTERVAL,
-            )
-            await self._cluster_client.initialize()
-            self._client = self._cluster_client
-        else:
-            # Single node or sentinel mode
-            connection_pool = ConnectionPool.from_url(
-                settings.REDIS_URL,
-                max_connections=settings.REDIS_MAX_CONNECTIONS,
-                socket_timeout=settings.REDIS_SOCKET_TIMEOUT,
-                socket_connect_timeout=settings.REDIS_SOCKET_CONNECT_TIMEOUT,
-                retry_on_timeout=settings.REDIS_RETRY_ON_TIMEOUT,
-                health_check_interval=settings.REDIS_HEALTH_CHECK_INTERVAL,
-            )
-            self._client = aioredis.Redis(connection_pool=connection_pool)
+        REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
+        self._client = aioredis.from_url(REDIS_URL)
         
         # Test connection
         await self._client.ping()
