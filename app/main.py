@@ -10,6 +10,7 @@ import logging
 from typing import Optional
 from datetime import datetime
 import uvicorn
+import os
 
 from app.core.config import settings
 from app.core.logging import setup_logging
@@ -79,7 +80,10 @@ async def lifespan(app: FastAPI):
     
     try:
         # 🔥 RUN MIGRATIONS FIRST
-        run_migrations()
+        if os.getenv("SKIP_MIGRATIONS") == "true":
+            logger.info("⏭️ Skipping migrations")
+        else:
+            run_migrations()
 
         # Initialize connections
         await db_manager.initialize()
