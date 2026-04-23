@@ -30,14 +30,14 @@ def upgrade() -> None:
                existing_type=postgresql.JSONB(astext_type=sa.Text()),
                type_=sa.JSON(),
                existing_nullable=True)
-    op.drop_column('users', 'is_admin')
-    op.drop_column('users', 'mfa_enabled')
-    op.drop_column('users', 'trusted_devices')
-    op.drop_column('users', 'mfa_secret')
-    op.drop_column('users', 'is_deleted')
-    op.drop_column('users', 'mfa_backup_codes')
-    op.drop_column('users', 'deleted_at')
-    op.drop_column('users', 'current_session_id')
+    op.execute("ALTER TABLE users DROP COLUMN IF EXISTS is_admin")
+    op.execute("ALTER TABLE users DROP COLUMN IF EXISTS mfa_enabled")
+    op.execute("ALTER TABLE users DROP COLUMN IF EXISTS trusted_devices")
+    op.execute("ALTER TABLE users DROP COLUMN IF EXISTS mfa_secret")
+    op.execute("ALTER TABLE users DROP COLUMN IF EXISTS is_deleted")
+    op.execute("ALTER TABLE users DROP COLUMN IF EXISTS mfa_backup_codes")
+    op.execute("ALTER TABLE users DROP COLUMN IF EXISTS deleted_at")
+    op.execute("ALTER TABLE users DROP COLUMN IF EXISTS current_session_id")
     # ### end Alembic commands ###
 
 
