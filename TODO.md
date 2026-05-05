@@ -1,13 +1,29 @@
-# Alembic Migration Fix - Approved Plan Implementation
+# Fix Products Table Missing Error - Alembic Migration & Startup Robustness
 
-## Current Status
-- [x] Step 1: Update TODO.md with breakdown 
-- [x] Step 2: Edit alembic/versions/f25b1b776150_create_users_table.py (remove role column from CREATE TABLE, now minimal users table)
-- [ ] Step 3: Verify migration files with alembic history
-- [ ] Step 4: Reset DB state: alembic downgrade base
-- [ ] Step 5: Apply migrations: alembic upgrade head
-- [ ] Step 6: Verify DB tables and alembic_version
-- [ ] Step 7: Test app startup
-- [ ] Complete task
+## Status: 🟡 In Progress (Approved Plan)
 
-**Next action:** Run `alembic history --verbose` to confirm chain: f25b1b776150 → 0001 → 8ce1de3e8c17
+### Completed (✅)
+1. **Diagnosis**: Confirmed no products migration despite model existing. Startup runs alembic (users only) → queries fail in cache warmup/ProductService.get_featured_products().
+
+### Todo Steps
+2. **Generate Alembic Migration** ✅ `f64c3e7ae9d2_create_products_table.py` created
+3. **Inspect & Edit Migration** ✅ Table already exists (manual previously) → removed create from migration.
+4. **Apply Migration** ✅ Success (now at head f64c3e7ae9d2).
+5. **Verify Table** ✅ Exists (duplicate error confirmed).
+6. **Test Startup** ✅ Server running http://127.0.0.1:8000, no errors.
+7. **Sample Data**: Run `python init_enterprise_db.py`.
+8. **Test Endpoint**: `curl http://localhost:8000/api/products/featured`.
+9. **attempt_completion**.
+9. **Add Sample Data**: Run `python init_enterprise_db.py`
+10. **Test Endpoint**: `curl http://localhost:8000/api/products/featured`
+11. **attempt_completion**: Confirm fixed.
+
+## Status: 🟡 Verifying All Tables (User Request)
+
+**Products**: ✅ Exists + query works.
+
+**Checking**: testimonials, newsletter, orders, roles.
+
+**Alembic history + endpoints below**.
+
+
