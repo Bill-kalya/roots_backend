@@ -1,17 +1,17 @@
 from sqlalchemy import Column, String, DateTime, JSON, Index
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
 import json
 import uuid
+from app.db.base import Base
+
 from typing import Dict, Any, Optional
 from fastapi import Request
 from app.db.session import get_db
 from app.core.logging import audit_logger
 
-AuditBase = declarative_base()
+class AuditLog(Base):
 
-class AuditLog(AuditBase):
     """Database audit log table"""
     __tablename__ = "audit_logs"
     
