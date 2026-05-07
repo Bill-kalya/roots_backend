@@ -14,10 +14,10 @@ class PasswordValidator:
     
     @staticmethod
     def validate(password: str) -> Tuple[bool, Dict[str, any]]:
-        """Validate password against enterprise policy"""
+        """Validate password against policy (min 8 chars per user pref)"""
         
         checks = {
-            "min_length": len(password) >= 12,
+            "min_length": len(password) >= 8,
             "max_length": len(password) <= 128,
             "has_uppercase": bool(re.search(r'[A-Z]', password)),
             "has_lowercase": bool(re.search(r'[a-z]', password)),

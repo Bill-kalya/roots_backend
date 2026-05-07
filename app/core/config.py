@@ -95,6 +95,18 @@ class Settings(BaseSettings):
     JWT_AUDIENCE: str = "roots-client"
 
     # =========================================================================
+    # EMAIL (SMTP)
+    # =========================================================================
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    EMAIL_FROM: str = ""
+
+    # Frontend URL used to build verify links
+    FRONTEND_URL: str = "http://localhost:5173"
+
+    # =========================================================================
     # CORS — Fixed: safe defaults + robust parser
     # =========================================================================
     # Explicit dev origins so the list is never empty in development.
@@ -103,6 +115,7 @@ class Settings(BaseSettings):
     # or comma-separated:
     #   CORS_ORIGINS=https://yourapp.com,https://www.yourapp.com
     CORS_ORIGINS: List[str] = [
+
         "http://localhost:5173",    # Vite default
         "http://localhost:3000",    # CRA / Next.js default
         "http://localhost:4173",    # Vite preview

@@ -78,7 +78,8 @@ class AuditLogger:
         details: Dict[str, Any],
         ip_address: str,
         user_agent: str,
-        status: str = "success"
+        status: str = "success",
+        error_message: Optional[str] = None
     ):
         """Log user action for audit trail"""
         audit_entry = {
@@ -90,6 +91,7 @@ class AuditLogger:
             "ip_address": ip_address,
             "user_agent": user_agent,
             "status": status,
+            "error_message": error_message,
             "timestamp": datetime.utcnow().isoformat(),
             "request_id": request_id_var.get()
         }

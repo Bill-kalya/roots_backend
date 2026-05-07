@@ -228,3 +228,271 @@
 {"message": "Redis connection initialized successfully", "timestamp": "2026-04-17T09:20:15.997474", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
 {"message": "System health monitor started (interval: 60s)", "timestamp": "2026-04-17T09:20:16.086893", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
 {"message": "\u2705 All services initialized in 2.57s", "timestamp": "2026-04-17T09:20:17.791724", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-05-05T10:47:08.828335", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Running database migrations...", "timestamp": "2026-05-05T10:47:08.830011", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "", "timestamp": "2026-05-05T10:47:14.236261", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "\u2705 Migrations completed successfully", "timestamp": "2026-05-05T10:47:14.236779", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-05-05T10:47:14.353593", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-05-05T10:47:14.424377", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-05-05T10:47:14.428292", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 6.96s", "timestamp": "2026-05-05T10:47:15.786367", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-05-05T11:03:46.692960", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-05-05T11:10:48.131725", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Running database migrations...", "timestamp": "2026-05-05T11:10:48.132374", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "", "timestamp": "2026-05-05T11:10:53.674071", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "\u2705 Migrations completed successfully", "timestamp": "2026-05-05T11:10:53.676697", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-05-05T11:10:53.815608", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-05-05T11:10:53.867040", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-05-05T11:10:53.879607", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 7.36s", "timestamp": "2026-05-05T11:10:55.496696", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Expired 0 old carts", "timestamp": "2026-05-05T11:47:14.450852", "level": "INFO", "logger": "app.services.cart_service", "service": "roots-backend"}
+{"message": "Expired 0 old carts", "timestamp": "2026-05-05T12:10:53.887171", "level": "INFO", "logger": "app.services.cart_service", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-05-04T21:50:55.599784", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Running database migrations...", "timestamp": "2026-05-04T21:50:55.600375", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "", "timestamp": "2026-05-04T21:51:01.850432", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "\u2705 Migrations completed successfully", "timestamp": "2026-05-04T21:51:01.851327", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-05-04T21:51:01.997656", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-05-04T21:51:02.264251", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-05-04T21:51:02.276751", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 8.54s", "timestamp": "2026-05-04T21:51:04.146690", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-05-05T14:35:25.240489", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-05-05T14:36:33.329307", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Running database migrations...", "timestamp": "2026-05-05T14:36:33.329959", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "", "timestamp": "2026-05-05T14:36:36.764194", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "\u2705 Migrations completed successfully", "timestamp": "2026-05-05T14:36:36.769513", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-05-05T14:36:36.909630", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-05-05T14:36:36.977403", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-05-05T14:36:36.985972", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 4.78s", "timestamp": "2026-05-05T14:36:38.110442", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-05-05T14:39:56.822752", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Running database migrations...", "timestamp": "2026-05-05T14:39:56.823389", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "", "timestamp": "2026-05-05T14:40:00.319732", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "\u2705 Migrations completed successfully", "timestamp": "2026-05-05T14:40:00.320235", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-05-05T14:40:00.505571", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-05-05T14:40:00.596939", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-05-05T14:40:00.600149", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 4.15s", "timestamp": "2026-05-05T14:40:00.970416", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-05-05T14:42:31.814337", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-05-05T14:45:38.104611", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Running database migrations...", "timestamp": "2026-05-05T14:45:38.105226", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "", "timestamp": "2026-05-05T14:45:46.783719", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "\u2705 Migrations completed successfully", "timestamp": "2026-05-05T14:45:46.784189", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-05-05T14:45:46.915547", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-05-05T14:45:46.977871", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-05-05T14:45:46.981681", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 10.05s", "timestamp": "2026-05-05T14:45:48.161555", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-05-05T14:46:38.999163", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-05-05T14:47:05.952728", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Running database migrations...", "timestamp": "2026-05-05T14:47:05.955991", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "", "timestamp": "2026-05-05T14:47:10.389135", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "\u2705 Migrations completed successfully", "timestamp": "2026-05-05T14:47:10.389588", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-05-05T14:47:10.496670", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-05-05T14:47:10.563910", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-05-05T14:47:10.569470", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 5.52s", "timestamp": "2026-05-05T14:47:11.473622", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-05-05T14:50:36.226355", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Running database migrations...", "timestamp": "2026-05-05T14:50:36.226991", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "", "timestamp": "2026-05-05T14:50:39.526774", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "\u2705 Migrations completed successfully", "timestamp": "2026-05-05T14:50:39.527215", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-05-05T14:50:39.599952", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-05-05T14:50:39.627204", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-05-05T14:50:39.636159", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 3.90s", "timestamp": "2026-05-05T14:50:40.131012", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-05-05T15:00:00.292807", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-05-05T15:04:44.355892", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Running database migrations...", "timestamp": "2026-05-05T15:04:44.356499", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "", "timestamp": "2026-05-05T15:04:53.087068", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "\u2705 Migrations completed successfully", "timestamp": "2026-05-05T15:04:53.213044", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-05-05T15:04:53.376231", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-05-05T15:04:53.434557", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-05-05T15:04:53.440785", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 11.05s", "timestamp": "2026-05-05T15:04:55.404922", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-05-05T15:05:40.865075", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Running database migrations...", "timestamp": "2026-05-05T15:05:40.865542", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "", "timestamp": "2026-05-05T15:05:43.961313", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "\u2705 Migrations completed successfully", "timestamp": "2026-05-05T15:05:43.961858", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-05-05T15:05:44.039132", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-05-05T15:05:44.065669", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-05-05T15:05:44.070909", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 3.56s", "timestamp": "2026-05-05T15:05:44.420869", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "(trapped) error reading bcrypt version", "exc_info": "Traceback (most recent call last):\n  File \"C:\\Users\\kalya\\projects\\roots_backend\\venv\\Lib\\site-packages\\passlib\\handlers\\bcrypt.py\", line 620, in _load_backend_mixin\n    version = _bcrypt.__about__.__version__\n              ^^^^^^^^^^^^^^^^^\nAttributeError: module 'bcrypt' has no attribute '__about__'", "timestamp": "2026-05-05T15:15:40.538728", "level": "WARNING", "logger": "passlib.handlers.bcrypt", "service": "roots-backend", "request_id": "90e9f30b-580f-4866-ac46-2fcbc7d39e69", "exception": "Traceback (most recent call last):\n  File \"C:\\Users\\kalya\\projects\\roots_backend\\venv\\Lib\\site-packages\\passlib\\handlers\\bcrypt.py\", line 620, in _load_backend_mixin\n    version = _bcrypt.__about__.__version__\n              ^^^^^^^^^^^^^^^^^\nAttributeError: module 'bcrypt' has no attribute '__about__'"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-05-05T15:21:12.289032", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-05-05T15:21:12.296887", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-05-05T15:21:49.268139", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-05-05T15:48:05.735200", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Running database migrations...", "timestamp": "2026-05-05T15:48:05.735916", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "", "timestamp": "2026-05-05T15:48:12.713351", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "\u2705 Migrations completed successfully", "timestamp": "2026-05-05T15:48:12.713853", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-05-05T15:48:12.807645", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-05-05T15:48:12.845267", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-05-05T15:48:12.848347", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 8.74s", "timestamp": "2026-05-05T15:48:14.478111", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-05-05T15:58:51.782741", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-05-05T15:58:52.362810", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-05-05T15:59:27.730514", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Running database migrations...", "timestamp": "2026-05-05T15:59:27.731055", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "", "timestamp": "2026-05-05T15:59:30.684302", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "\u2705 Migrations completed successfully", "timestamp": "2026-05-05T15:59:30.684889", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-05-05T15:59:30.776890", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-05-05T15:59:30.807359", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-05-05T15:59:30.810409", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 4.17s", "timestamp": "2026-05-05T15:59:31.902824", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "(trapped) error reading bcrypt version", "exc_info": "Traceback (most recent call last):\n  File \"C:\\Users\\kalya\\projects\\roots_backend\\venv\\Lib\\site-packages\\passlib\\handlers\\bcrypt.py\", line 620, in _load_backend_mixin\n    version = _bcrypt.__about__.__version__\n              ^^^^^^^^^^^^^^^^^\nAttributeError: module 'bcrypt' has no attribute '__about__'", "timestamp": "2026-05-05T16:23:45.977111", "level": "WARNING", "logger": "passlib.handlers.bcrypt", "service": "roots-backend", "request_id": "5bf80951-6a73-4de8-9f59-d010bea9f669", "exception": "Traceback (most recent call last):\n  File \"C:\\Users\\kalya\\projects\\roots_backend\\venv\\Lib\\site-packages\\passlib\\handlers\\bcrypt.py\", line 620, in _load_backend_mixin\n    version = _bcrypt.__about__.__version__\n              ^^^^^^^^^^^^^^^^^\nAttributeError: module 'bcrypt' has no attribute '__about__'"}
+{"message": "(trapped) error reading bcrypt version", "exc_info": "Traceback (most recent call last):\n  File \"C:\\Users\\kalya\\projects\\roots_backend\\venv\\Lib\\site-packages\\passlib\\handlers\\bcrypt.py\", line 620, in _load_backend_mixin\n    version = _bcrypt.__about__.__version__\n              ^^^^^^^^^^^^^^^^^\nAttributeError: module 'bcrypt' has no attribute '__about__'", "timestamp": "2026-05-05T16:24:09.516410", "level": "WARNING", "logger": "passlib.handlers.bcrypt", "service": "roots-backend", "request_id": "359ea630-4afc-4cb3-9034-9a12f81221f0", "exception": "Traceback (most recent call last):\n  File \"C:\\Users\\kalya\\projects\\roots_backend\\venv\\Lib\\site-packages\\passlib\\handlers\\bcrypt.py\", line 620, in _load_backend_mixin\n    version = _bcrypt.__about__.__version__\n              ^^^^^^^^^^^^^^^^^\nAttributeError: module 'bcrypt' has no attribute '__about__'"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-05-05T16:29:07.772992", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-05-05T16:42:02.542161", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Running database migrations...", "timestamp": "2026-05-05T16:42:02.542802", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "", "timestamp": "2026-05-05T16:42:07.605235", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "\u2705 Migrations completed successfully", "timestamp": "2026-05-05T16:42:07.605856", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-05-05T16:42:07.817685", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-05-05T16:42:07.979333", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-05-05T16:42:07.983493", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 6.66s", "timestamp": "2026-05-05T16:42:09.202185", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "(trapped) error reading bcrypt version", "exc_info": "Traceback (most recent call last):\n  File \"C:\\Users\\kalya\\projects\\roots_backend\\venv\\Lib\\site-packages\\passlib\\handlers\\bcrypt.py\", line 620, in _load_backend_mixin\n    version = _bcrypt.__about__.__version__\n              ^^^^^^^^^^^^^^^^^\nAttributeError: module 'bcrypt' has no attribute '__about__'", "timestamp": "2026-05-05T16:42:30.788967", "level": "WARNING", "logger": "passlib.handlers.bcrypt", "service": "roots-backend", "request_id": "c892e0de-581d-4d80-a507-3732c1fb8f7f", "exception": "Traceback (most recent call last):\n  File \"C:\\Users\\kalya\\projects\\roots_backend\\venv\\Lib\\site-packages\\passlib\\handlers\\bcrypt.py\", line 620, in _load_backend_mixin\n    version = _bcrypt.__about__.__version__\n              ^^^^^^^^^^^^^^^^^\nAttributeError: module 'bcrypt' has no attribute '__about__'"}
+{"message": "(trapped) error reading bcrypt version", "exc_info": "Traceback (most recent call last):\n  File \"C:\\Users\\kalya\\projects\\roots_backend\\venv\\Lib\\site-packages\\passlib\\handlers\\bcrypt.py\", line 620, in _load_backend_mixin\n    version = _bcrypt.__about__.__version__\n              ^^^^^^^^^^^^^^^^^\nAttributeError: module 'bcrypt' has no attribute '__about__'", "timestamp": "2026-05-05T16:42:57.917128", "level": "WARNING", "logger": "passlib.handlers.bcrypt", "service": "roots-backend", "request_id": "3f8ea4ba-d5f3-488a-aa2a-c369c6373f86", "exception": "Traceback (most recent call last):\n  File \"C:\\Users\\kalya\\projects\\roots_backend\\venv\\Lib\\site-packages\\passlib\\handlers\\bcrypt.py\", line 620, in _load_backend_mixin\n    version = _bcrypt.__about__.__version__\n              ^^^^^^^^^^^^^^^^^\nAttributeError: module 'bcrypt' has no attribute '__about__'"}
+{"message": "Expired 0 old carts", "timestamp": "2026-05-05T17:42:08.018504", "level": "INFO", "logger": "app.services.cart_service", "service": "roots-backend"}
+{"message": "(trapped) error reading bcrypt version", "exc_info": "Traceback (most recent call last):\n  File \"C:\\Users\\kalya\\projects\\roots_backend\\venv\\Lib\\site-packages\\passlib\\handlers\\bcrypt.py\", line 620, in _load_backend_mixin\n    version = _bcrypt.__about__.__version__\n              ^^^^^^^^^^^^^^^^^\nAttributeError: module 'bcrypt' has no attribute '__about__'", "timestamp": "2026-05-05T17:47:33.175222", "level": "WARNING", "logger": "passlib.handlers.bcrypt", "service": "roots-backend", "request_id": "d8b9e9c2-ebce-436b-9b77-ad3cc2842f3f", "exception": "Traceback (most recent call last):\n  File \"C:\\Users\\kalya\\projects\\roots_backend\\venv\\Lib\\site-packages\\passlib\\handlers\\bcrypt.py\", line 620, in _load_backend_mixin\n    version = _bcrypt.__about__.__version__\n              ^^^^^^^^^^^^^^^^^\nAttributeError: module 'bcrypt' has no attribute '__about__'"}
+{"message": "(trapped) error reading bcrypt version", "exc_info": "Traceback (most recent call last):\n  File \"C:\\Users\\kalya\\projects\\roots_backend\\venv\\Lib\\site-packages\\passlib\\handlers\\bcrypt.py\", line 620, in _load_backend_mixin\n    version = _bcrypt.__about__.__version__\n              ^^^^^^^^^^^^^^^^^\nAttributeError: module 'bcrypt' has no attribute '__about__'", "timestamp": "2026-05-05T17:47:42.837192", "level": "WARNING", "logger": "passlib.handlers.bcrypt", "service": "roots-backend", "request_id": "ce695fc0-29fb-45c9-8054-6a556bf4943d", "exception": "Traceback (most recent call last):\n  File \"C:\\Users\\kalya\\projects\\roots_backend\\venv\\Lib\\site-packages\\passlib\\handlers\\bcrypt.py\", line 620, in _load_backend_mixin\n    version = _bcrypt.__about__.__version__\n              ^^^^^^^^^^^^^^^^^\nAttributeError: module 'bcrypt' has no attribute '__about__'"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-05-05T17:51:10.507083", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-05-05T17:51:58.872638", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-05-05T17:52:36.202124", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Running database migrations...", "timestamp": "2026-05-05T17:52:36.202860", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "", "timestamp": "2026-05-05T17:52:39.438445", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "\u2705 Migrations completed successfully", "timestamp": "2026-05-05T17:52:39.438923", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-05-05T17:52:39.523832", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-05-05T17:52:39.553208", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-05-05T17:52:39.558893", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 4.41s", "timestamp": "2026-05-05T17:52:40.609989", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-05-05T17:56:46.044484", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-05-05T18:09:03.897745", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Running database migrations...", "timestamp": "2026-05-05T18:09:03.898535", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "", "timestamp": "2026-05-05T18:09:10.522912", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "\u2705 Migrations completed successfully", "timestamp": "2026-05-05T18:09:10.523510", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-05-05T18:09:10.684892", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-05-05T18:09:10.741005", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-05-05T18:09:10.745905", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 8.15s", "timestamp": "2026-05-05T18:09:12.053031", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-05-05T18:14:29.095191", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-05-05T18:19:50.531606", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Running database migrations...", "timestamp": "2026-05-05T18:19:50.532255", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "", "timestamp": "2026-05-05T18:19:53.585026", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "\u2705 Migrations completed successfully", "timestamp": "2026-05-05T18:19:53.585424", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-05-05T18:19:53.678680", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-05-05T18:19:53.730662", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-05-05T18:19:53.751528", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 4.97s", "timestamp": "2026-05-05T18:19:55.505512", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-05-05T18:25:14.840408", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-05-05T18:25:58.438324", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-05-05T18:28:09.620575", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Running database migrations...", "timestamp": "2026-05-05T18:28:09.621272", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "", "timestamp": "2026-05-05T18:28:12.681665", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "\u2705 Migrations completed successfully", "timestamp": "2026-05-05T18:28:12.682283", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-05-05T18:28:12.777209", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-05-05T18:28:12.810455", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-05-05T18:28:12.820899", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 4.24s", "timestamp": "2026-05-05T18:28:13.858294", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Expired 0 old carts", "timestamp": "2026-05-05T19:28:12.957018", "level": "INFO", "logger": "app.services.cart_service", "service": "roots-backend"}
+{"message": "Expired 0 old carts", "timestamp": "2026-05-05T20:28:12.995153", "level": "INFO", "logger": "app.services.cart_service", "service": "roots-backend"}
+{"message": "Write engine health check failed: ", "timestamp": "2026-05-05T20:50:00.403047", "level": "ERROR", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Alert [critical][database]: Database Connection Failed \u2014 Cannot connect to the primary database", "timestamp": "2026-05-05T20:50:03.362071", "level": "CRITICAL", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "Expired 0 old carts", "timestamp": "2026-05-05T21:28:13.023894", "level": "INFO", "logger": "app.services.cart_service", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-05-06T08:58:19.628268", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Running database migrations...", "timestamp": "2026-05-06T08:58:19.629440", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "", "timestamp": "2026-05-06T08:58:26.980012", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "\u2705 Migrations completed successfully", "timestamp": "2026-05-06T08:58:26.980574", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-05-06T08:58:27.131690", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-05-06T08:58:27.225556", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-05-06T08:58:27.231396", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 9.75s", "timestamp": "2026-05-06T08:58:29.375321", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-05-06T09:11:16.417179", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Write engine health check failed: ", "timestamp": "2026-05-06T09:34:44.752273", "level": "ERROR", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Alert [critical][database]: Database Connection Failed \u2014 Cannot connect to the primary database", "timestamp": "2026-05-06T09:34:46.818351", "level": "CRITICAL", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "Expired 0 old carts", "timestamp": "2026-05-06T09:58:27.493642", "level": "INFO", "logger": "app.services.cart_service", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-05-06T10:29:10.586746", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-05-06T10:29:48.076324", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Running database migrations...", "timestamp": "2026-05-06T10:29:48.077276", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "", "timestamp": "2026-05-06T10:30:02.020386", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "\u2705 Migrations completed successfully", "timestamp": "2026-05-06T10:30:02.020824", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-05-06T10:30:02.223749", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-05-06T10:30:02.285859", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-05-06T10:30:02.290994", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 18.84s", "timestamp": "2026-05-06T10:30:06.983843", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-05-06T10:37:55.590933", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-05-06T10:38:18.317522", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Running database migrations...", "timestamp": "2026-05-06T10:38:18.318355", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "", "timestamp": "2026-05-06T10:38:21.623871", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "\u2705 Migrations completed successfully", "timestamp": "2026-05-06T10:38:21.624344", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-05-06T10:38:21.712099", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-05-06T10:38:21.749421", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-05-06T10:38:21.752385", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 4.32s", "timestamp": "2026-05-06T10:38:22.634432", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-05-06T10:51:29.864355", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-05-06T10:56:10.081517", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Running database migrations...", "timestamp": "2026-05-06T10:56:10.082116", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "", "timestamp": "2026-05-06T10:56:14.423314", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "\u2705 Migrations completed successfully", "timestamp": "2026-05-06T10:56:14.423934", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-05-06T10:56:14.518037", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-05-06T10:56:14.551368", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-05-06T10:56:14.558137", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 6.15s", "timestamp": "2026-05-06T10:56:16.229488", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-05-06T10:58:51.172846", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "{\"user_id\": \"ca68ec5b-2c93-4de8-8bbb-9a6e134b6540\", \"action\": \"login_failed\", \"resource\": \"auth\", \"resource_id\": null, \"details\": {\"email\": \"enivamoraa22@gmail.com\", \"reason\": \"invalid_credentials\"}, \"ip_address\": \"127.0.0.1\", \"user_agent\": \"Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Mobile Safari/537.36\", \"status\": \"failure\", \"error_message\": null, \"timestamp\": \"2026-05-06T11:05:21.524301\", \"request_id\": \"9aae8ef8-1bc5-47ad-a15e-a2d767e3a499\"}", "timestamp": "2026-05-06T11:05:21.524803", "level": "INFO", "logger": "audit", "service": "roots-backend", "request_id": "9aae8ef8-1bc5-47ad-a15e-a2d767e3a499"}
+{"message": "{\"user_id\": \"ca68ec5b-2c93-4de8-8bbb-9a6e134b6540\", \"action\": \"login_failed\", \"resource\": \"auth\", \"resource_id\": null, \"details\": {\"email\": \"enivamoraa22@gmail.com\", \"reason\": \"invalid_credentials\"}, \"ip_address\": \"127.0.0.1\", \"user_agent\": \"Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Mobile Safari/537.36\", \"status\": \"failure\", \"error_message\": null, \"timestamp\": \"2026-05-06T11:08:36.208099\", \"request_id\": \"272bf8a2-4b29-4285-90ce-3f02c6937fa8\"}", "timestamp": "2026-05-06T11:08:36.219663", "level": "INFO", "logger": "audit", "service": "roots-backend", "request_id": "272bf8a2-4b29-4285-90ce-3f02c6937fa8"}
+{"message": "Expired 0 old carts", "timestamp": "2026-05-06T11:56:14.605654", "level": "INFO", "logger": "app.services.cart_service", "service": "roots-backend"}
+{"message": "Expired 0 old carts", "timestamp": "2026-05-06T12:56:14.623966", "level": "INFO", "logger": "app.services.cart_service", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-05-06T13:44:10.916887", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-05-06T13:45:13.678897", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Running database migrations...", "timestamp": "2026-05-06T13:45:13.680001", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "", "timestamp": "2026-05-06T13:45:22.604893", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "\u2705 Migrations completed successfully", "timestamp": "2026-05-06T13:45:22.605432", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-05-06T13:45:22.734142", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-05-06T13:45:22.835731", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-05-06T13:45:22.890277", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 11.12s", "timestamp": "2026-05-06T13:45:24.795768", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Expired 0 old carts", "timestamp": "2026-05-06T14:45:22.910050", "level": "INFO", "logger": "app.services.cart_service", "service": "roots-backend"}
+{"message": "Expired 0 old carts", "timestamp": "2026-05-06T15:45:22.931515", "level": "INFO", "logger": "app.services.cart_service", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-05-07T08:25:52.275048", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Running database migrations...", "timestamp": "2026-05-07T08:25:52.320216", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "", "timestamp": "2026-05-07T08:26:03.376312", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "\u2705 Migrations completed successfully", "timestamp": "2026-05-07T08:26:03.377234", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-05-07T08:26:03.565080", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-05-07T08:26:03.652460", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-05-07T08:26:03.659779", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 13.44s", "timestamp": "2026-05-07T08:26:05.713872", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-05-07T09:08:23.528339", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Running database migrations...", "timestamp": "2026-05-07T09:08:23.529256", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "", "timestamp": "2026-05-07T09:08:27.708473", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "\u2705 Migrations completed successfully", "timestamp": "2026-05-07T09:08:27.709020", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-05-07T09:08:27.796905", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-05-07T09:08:27.823244", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-05-07T09:08:27.828739", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 5.50s", "timestamp": "2026-05-07T09:08:29.025220", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-05-07T09:14:00.785164", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-05-07T09:14:56.791653", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Running database migrations...", "timestamp": "2026-05-07T09:14:56.792315", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "", "timestamp": "2026-05-07T09:15:04.109336", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "\u2705 Migrations completed successfully", "timestamp": "2026-05-07T09:15:04.125602", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-05-07T09:15:04.386087", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-05-07T09:15:04.802059", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-05-07T09:15:04.887721", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 10.23s", "timestamp": "2026-05-07T09:15:07.056435", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Write engine health check failed: ", "timestamp": "2026-05-07T09:26:48.346969", "level": "ERROR", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Alert [critical][database]: Database Connection Failed \u2014 Cannot connect to the primary database", "timestamp": "2026-05-07T09:26:49.020525", "level": "CRITICAL", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "Expired 0 old carts", "timestamp": "2026-05-07T10:08:27.748169", "level": "INFO", "logger": "app.services.cart_service", "service": "roots-backend"}
+{"message": "Expired 0 old carts", "timestamp": "2026-05-07T10:15:04.826422", "level": "INFO", "logger": "app.services.cart_service", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-05-07T10:31:56.306445", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Write engine health check failed: ", "timestamp": "2026-05-07T10:42:37.415258", "level": "ERROR", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Alert [critical][database]: Database Connection Failed \u2014 Cannot connect to the primary database", "timestamp": "2026-05-07T10:42:40.129162", "level": "CRITICAL", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "Write engine health check failed: ", "timestamp": "2026-05-07T10:43:15.159019", "level": "ERROR", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Alert [critical][database]: Database Connection Failed \u2014 Cannot connect to the primary database", "timestamp": "2026-05-07T10:43:15.752572", "level": "CRITICAL", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "Expired 0 old carts", "timestamp": "2026-05-07T11:08:27.794851", "level": "INFO", "logger": "app.services.cart_service", "service": "roots-backend"}
+{"message": "Expired 0 old carts", "timestamp": "2026-05-07T11:15:04.803637", "level": "INFO", "logger": "app.services.cart_service", "service": "roots-backend"}
+{"message": "Write engine health check failed: ", "timestamp": "2026-05-07T11:36:46.205001", "level": "ERROR", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Alert [critical][database]: Database Connection Failed \u2014 Cannot connect to the primary database", "timestamp": "2026-05-07T11:36:47.218884", "level": "CRITICAL", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "Write engine health check failed: ", "timestamp": "2026-05-07T11:37:57.478715", "level": "ERROR", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Alert [critical][database]: Database Connection Failed \u2014 Cannot connect to the primary database", "timestamp": "2026-05-07T11:37:57.880521", "level": "CRITICAL", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "Write engine health check failed: ", "timestamp": "2026-05-07T11:39:09.279897", "level": "ERROR", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Alert [critical][database]: Database Connection Failed \u2014 Cannot connect to the primary database", "timestamp": "2026-05-07T11:39:10.100849", "level": "CRITICAL", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "Expired 0 old carts", "timestamp": "2026-05-07T12:08:27.795551", "level": "INFO", "logger": "app.services.cart_service", "service": "roots-backend"}
+{"message": "Expired 0 old carts", "timestamp": "2026-05-07T12:15:04.818876", "level": "INFO", "logger": "app.services.cart_service", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-05-07T13:49:32.055828", "level": "INFO", "logger": "app.main", "service": "roots-backend"}

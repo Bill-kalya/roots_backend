@@ -1,29 +1,24 @@
-# Fix Products Table Missing Error - Alembic Migration & Startup Robustness
+# TODO - MFA end-to-end wiring
 
-## Status: 🟡 In Progress (Approved Plan)
+## Step 1: Add/adjust MFA schemas
+- [ ] Update `app/schemas/user.py` with request/response models:
+  - login step1 response including `requires_mfa` + `user_id`
+  - `MFASecondStepRequest` for `/api/auth/login/verify-mfa`
+  - `MFASetupResponse` and `MFAEnableEnrollRequest`
 
-### Completed (✅)
-1. **Diagnosis**: Confirmed no products migration despite model existing. Startup runs alembic (users only) → queries fail in cache warmup/ProductService.get_featured_products().
+## Step 2: Implement MFA routes
+- [ ] Update `app/api/routes/auth.py`:
+  - [ ] Add `POST /mfa/setup`
+  - [ ] Add `POST /mfa/verify-enroll`
+  - [ ] Add `POST /login/verify-mfa`
+  - [ ] Update `POST /login` to return `requires_mfa/user_id` when MFA required
 
-### Todo Steps
-2. **Generate Alembic Migration** ✅ `f64c3e7ae9d2_create_products_table.py` created
-3. **Inspect & Edit Migration** ✅ Table already exists (manual previously) → removed create from migration.
-4. **Apply Migration** ✅ Success (now at head f64c3e7ae9d2).
-5. **Verify Table** ✅ Exists (duplicate error confirmed).
-6. **Test Startup** ✅ Server running http://127.0.0.1:8000, no errors.
-7. **Sample Data**: Run `python init_enterprise_db.py`.
-8. **Test Endpoint**: `curl http://localhost:8000/api/products/featured`.
-9. **attempt_completion**.
-9. **Add Sample Data**: Run `python init_enterprise_db.py`
-10. **Test Endpoint**: `curl http://localhost:8000/api/products/featured`
-11. **attempt_completion**: Confirm fixed.
+## Step 3: Ensure route wiring
+- [ ] Verify `app/main.py` already includes `auth.router` (it does) and no extra changes needed.
 
-## Status: 🟡 Verifying All Tables (User Request)
+## Step 4: Basic smoke tests
+- [ ] Run unit/smoke checks by importing FastAPI app and ensuring routes register.
 
-**Products**: ✅ Exists + query works.
-
-**Checking**: testimonials, newsletter, orders, roles.
-
-**Alembic history + endpoints below**.
-
+## Step 5: Frontend guidance
+- [ ] Provide exact frontend call flow and payloads based on the implemented contract.
 

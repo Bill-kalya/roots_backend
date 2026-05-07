@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
-from uuid import UUID
+from uuid import UUID, uuid4
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any, Tuple
 import hashlib
@@ -221,34 +221,59 @@ class AuthService:
         existing_user = result.scalar_one_or_none()
         
         if existing_user:
-            return None
+            raise ValueError("Email already registered")
         
-        # Validate password strength
-        password_valid = await self._validate_password_strength(user_data.password)
-        if not password_valid["is_valid"]:
-            raise ValueError(f"Password requirements not met: {password_valid['requirements']}")
+        # Password already validated by Pydantic schema
         
-        # Create user
+        # Generate verification token
+        import secrets
+        from datetime import datetime, timedelta
+
+        token = secrets.token_urlsafe(32)
+        expires = datetime.utcnow() + timedelta(hours=24)
+
+        # Create user (inactive until email verified)
         new_user = User(
             email=user_data.email,
             hashed_password=get_password_hash(user_data.password),
             full_name=user_data.full_name,
-            is_active=True,
+            is_active=False,
+            is_verified=False,
             is_admin=False,
+            verification_token=token,
+            verification_token_expires=expires,
             mfa_enabled=False,
-            mfa_secret=MFAService.generate_secret() if user_data.get("enable_mfa") else None,
+            mfa_secret=MFAService.generate_secret() if getattr(user_data, "enable_mfa", False) else None,
             failed_login_attempts=0,
             last_login=None,
             account_locked_until=None
         )
+
         
         self.db.add(new_user)
         await self.db.commit()
         await self.db.refresh(new_user)
         
+        # Send verification email
+        # IMPORTANT: registration should not fail if SMTP is misconfigured or provider blocks SMTP.
+        from app.services.email_service import email_service
+
+        try:
+            await email_service.send_verification_email(
+                email=new_user.email,
+                full_name=new_user.full_name,
+                token=token,
+            )
+        except Exception as e:
+            # Avoid crashing the entire request; user can still verify later.
+            logger.exception("Email sending failed during registration")
+            print(f"Email sending failed: {e}")
+
+
         # Audit log
         await audit_service.log(
             user_id=str(new_user.id),
+
             action="user_register",
             resource="user",
             resource_id=str(new_user.id),
@@ -268,6 +293,8 @@ class AuthService:
     ) -> Optional[Dict]:
         """Authenticate user with MFA and brute force protection"""
         
+        if request is None:
+            raise ValueError("Request context is required for login")
         ip_address = request.client.host
         
         # Check brute force lockout
@@ -296,8 +323,13 @@ class AuthService:
             
             raise ValueError(f"Invalid credentials. {lock_status['remaining_attempts']} attempts remaining")
         
+        # Email verification gate
+        if not user.is_verified:
+            raise ValueError("Please verify your email before logging in")
+
         # Check if account is locked
         if user.account_locked_until and user.account_locked_until > datetime.utcnow():
+
             raise ValueError(f"Account locked until {user.account_locked_until}")
         
         # Check MFA if enabled
@@ -507,24 +539,34 @@ class AuthService:
         
         return False
     
+    async def validate_password(self, password: str) -> Dict:
+        """Public validation for /api/auth/validate-password endpoint (client-side UX)"""
+        from app.schemas.user import PasswordCheckResponse
+        from app.core.security import PasswordValidator
+        
+        is_valid, checks = PasswordValidator.validate(password)
+        failed = [k for k, v in checks.items() if not v]
+        messages = {
+            'min_length': 'at least 8 chars',
+            'max_length': '≤128 chars',
+            'has_uppercase': 'A-Z',
+            'has_lowercase': 'a-z',
+            'has_digit': '0-9',
+            'has_special': '!@#$ etc',
+            'no_common_patterns': 'no repeats/common'
+        }
+        failed_reqs = [messages.get(k, k.replace('_', ' ').title()) for k in failed]
+        
+        result = PasswordCheckResponse(
+            is_valid=is_valid,
+            failed_requirements=failed_reqs,
+            checks=checks
+        )
+        return result.model_dump()
+    
     async def _validate_password_strength(self, password: str) -> Dict:
-        """Validate password against enterprise policies"""
-        
-        checks = {
-            "length": len(password) >= 12,
-            "uppercase": any(c.isupper() for c in password),
-            "lowercase": any(c.islower() for c in password),
-            "digit": any(c.isdigit() for c in password),
-            "special": any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in password),
-            "no_common": password.lower() not in ["password", "admin", "123456", "qwerty"]
-        }
-        
-        is_valid = all(checks.values())
-        
-        return {
-            "is_valid": is_valid,
-            "requirements": checks
-        }
+        """Internal compatibility wrapper"""
+        return await self.validate_password(password)
     
     async def _generate_qr_code(self, uri: str) -> str:
         """Generate QR code as base64 string"""

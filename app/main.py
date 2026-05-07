@@ -27,6 +27,13 @@ from app.api.routes import auth, newsletter, testimonials, products as public_pr
 from app.api.routes.user import products as user_products, profile as user_profile, orders as user_orders
 from app.api.routes.merchant import products as merchant_products, orders as merchant_orders, analytics as merchant_analytics
 from app.api.routes.admin import dashboard as admin_dashboard, users as admin_users, products as admin_products, settings as admin_settings
+from app.api.errors import (
+    request_validation_exception_handler,
+    http_exception_handler,
+    starlette_http_exception_handler,
+    global_exception_handler,
+)
+
 
 logger = logging.getLogger(__name__)
 
@@ -134,7 +141,9 @@ async def run_cart_expiration(cart_service):
 
 # Create FastAPI app
 app = FastAPI(
+
     title="Roots API - Enterprise Edition with RBAC",
+
     version="2.0.0",
     redirect_slashes=False,
     description="Enterprise E-commerce Backend with Role-Based Access Control",
@@ -152,8 +161,20 @@ app = FastAPI(
     ]
 )
 
+# Register global exception handlers (centralized error responses)
+from fastapi.exceptions import RequestValidationError
+from fastapi.exceptions import HTTPException
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+app.add_exception_handler(RequestValidationError, request_validation_exception_handler)
+app.add_exception_handler(HTTPException, http_exception_handler)
+app.add_exception_handler(StarletteHTTPException, starlette_http_exception_handler)
+app.add_exception_handler(Exception, global_exception_handler)
+
+
 # Enterprise middleware stack (optimized order)
 app.add_middleware(GZipMiddleware, minimum_size=1000)  # Compress responses > 1KB
+
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
 app.add_middleware(RequestIDMiddleware)
 

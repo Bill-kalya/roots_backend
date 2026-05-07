@@ -77,7 +77,10 @@ class AuditService:
         }
         
         # Log to JSON file (for SIEM)
-        audit_logger.log_action(**log_entry)
+        # audit_logger.log_action may not accept all keys (e.g., timestamp/error_message)
+        pythonlog_entry_for_logger = {k: v for k, v in log_entry.items()
+                         if k not in ("timestamp", "error_message")}
+        audit_logger.log_action(**pythonlog_entry_for_logger)
         
         # Store in database for querying
         await self._store_in_db(log_entry)

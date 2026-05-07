@@ -26,12 +26,16 @@ class User(Base, TimestampMixin):
     is_active = Column(Boolean, default=True)
     is_verified = Column(Boolean, default=False)
     verification_token = Column(String(255), nullable=True)
+    verification_token_expires = Column(DateTime, nullable=True)
+
     
     # Security fields
     failed_login_attempts = Column(Integer, default=0)
     last_failed_login = Column(DateTime, nullable=True)
     account_locked_until = Column(DateTime, nullable=True)
     lockout_reason = Column(String(255), nullable=True)
+    mfa_enabled = Column(Boolean, default=False)
+    mfa_secret = Column(String(255), nullable=True)
     
     # Session management
     last_login = Column(DateTime, nullable=True)
