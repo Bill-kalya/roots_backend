@@ -89,24 +89,39 @@ class AuditService:
         await self._check_suspicious_activity(log_entry)
     
     async def _store_in_db(self, log_entry: Dict):
-        """Store audit log in database"""
-        from sqlalchemy.ext.asyncio import AsyncSession
-        
-        async for db in get_db():
-            audit_log = AuditLog(
-                user_id=log_entry.get("user_id"),
-                action=log_entry["action"],
-                resource=log_entry["resource"],
-                resource_id=log_entry.get("resource_id"),
-                details=log_entry.get("details"),
-                ip_address=log_entry.get("ip_address"),
-                user_agent=log_entry.get("user_agent"),
-                status=log_entry["status"],
-                error_message=log_entry.get("error_message")
-            )
-            db.add(audit_log)
-            await db.commit()
-            break
+        """Store audit log in database.
+
+        Audit persistence must never break the primary request flow.
+        If the audit table/migration is missing or the DB is unavailable,
+        we swallow the exception after logging.
+        """
+        try:
+            async for db in get_db():
+                audit_log = AuditLog(
+                    user_id=log_entry.get("user_id"),
+                    action=log_entry["action"],
+                    resource=log_entry["resource"],
+                    resource_id=log_entry.get("resource_id"),
+                    details=log_entry.get("details"),
+                    ip_address=log_entry.get("ip_address"),
+                    user_agent=log_entry.get("user_agent"),
+                    status=log_entry["status"],
+                    error_message=log_entry.get("error_message"),
+                )
+                db.add(audit_log)
+                await db.commit()
+                break
+        except Exception as e:
+            # Use the audit logger/structured logger so failures are observable,
+            # but do not re-raise.
+            try:
+                from app.core.logging import audit_logger
+
+                audit_logger.logger.error(f"Failed to store audit log in DB: {e}")
+            except Exception:
+                # Fallback: do nothing if even audit_logger isn't available.
+                pass
+
     
     def _sanitize_data(self, data: Dict) -> Dict:
         """Remove sensitive data from logs"""

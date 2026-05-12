@@ -88,6 +88,7 @@ async def register(
 
 @router.get("/verify-email")
 async def verify_email(token: str, db: AsyncSession = Depends(get_db)):
+
     """Verify email address using token."""
     query = select(User).where(User.verification_token == token)
     result = await db.execute(query)
@@ -111,7 +112,31 @@ async def verify_email(token: str, db: AsyncSession = Depends(get_db)):
     return {"message": "Email verified successfully. You can now log in."}
 
 
+@router.post("/resend-verification")
+async def resend_verification(
+    payload: dict,
+    db: AsyncSession = Depends(get_db),
+    redis: aioredis.Redis = Depends(get_redis),
+):
+    """Regenerate and re-send email verification."""
+    email = payload.get("email") if isinstance(payload, dict) else None
+    if not email:
+        raise HTTPException(status_code=422, detail="Missing email")
+
+    service = AuthService(db, redis)
+    try:
+        sent = await service.resend_verification_email(user_email=email, request=None)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if sent:
+        return {"message": "Verification email re-sent"}
+
+    raise HTTPException(status_code=400, detail="Email already verified")
+
+
 @router.post("/login")
+
 async def login(
     request: Request,
     credentials: UserLogin,

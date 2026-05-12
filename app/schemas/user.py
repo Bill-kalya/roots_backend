@@ -1,4 +1,5 @@
-from pydantic import BaseModel, EmailStr, model_validator
+from pydantic import BaseModel, EmailStr, model_validator, ConfigDict
+
 from typing import List, Optional
 from uuid import UUID
 from datetime import datetime
@@ -76,10 +77,13 @@ class MFAEnableEnrollRequest(BaseModel):
 
 
 class UserResponse(UserBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     is_active: bool
     is_admin: bool
     created_at: datetime
+
 
 
 class Token(BaseModel):

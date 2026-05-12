@@ -255,7 +255,7 @@ class AuthService:
         await self.db.refresh(new_user)
         
         # Send verification email
-        # IMPORTANT: registration should not fail if SMTP is misconfigured or provider blocks SMTP.
+        # IMPORTANT: registration should not fail if provider is misconfigured or blocks SMTP/Resend.
         from app.services.email_service import email_service
 
         try:
@@ -268,6 +268,7 @@ class AuthService:
             # Avoid crashing the entire request; user can still verify later.
             logger.exception("Email sending failed during registration")
             print(f"Email sending failed: {e}")
+
 
 
         # Audit log
@@ -488,8 +489,49 @@ class AuthService:
         
         # Blacklist access token (optional - would need token storage)
         
+    async def resend_verification_email(self, user_email: str, request=None) -> bool:
+        """Regenerate email verification token and re-send the verification email."""
+        query = select(User).where(User.email == user_email)
+        result = await self.db.execute(query)
+        user = result.scalar_one_or_none()
+        if not user:
+            raise ValueError("User not found")
+
+        # If already verified, no-op
+        if user.is_verified:
+            return False
+
+        import secrets
+        from datetime import datetime, timedelta
+
+        token = secrets.token_urlsafe(32)
+        expires = datetime.utcnow() + timedelta(hours=24)
+
+        user.verification_token = token
+        user.verification_token_expires = expires
+        # Keep is_active=false until verified
+        user.is_active = False
+        self.db.add(user)
+        await self.db.commit()
+        await self.db.refresh(user)
+
+        from app.services.email_service import email_service
+
+        try:
+            await email_service.send_verification_email(
+                email=user.email,
+                full_name=user.full_name,
+                token=token,
+            )
+        except Exception as e:
+            logger.exception("Resend verification email failed")
+            print(f"Resend verification email failed: {e}")
+
+        return True
+
     async def logout_all_devices(self, user_id: UUID):
         """Logout from all devices"""
+
         
         # Invalidate all sessions
         await self.session_manager.invalidate_all_user_sessions(user_id)

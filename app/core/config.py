@@ -107,6 +107,14 @@ class Settings(BaseSettings):
     FRONTEND_URL: str = "http://localhost:5173"
 
     # =========================================================================
+    # EMAIL (Resend)
+    # =========================================================================
+    RESEND_API_KEY: str = ""
+    # If empty, we fall back to EMAIL_FROM
+    RESEND_FROM_EMAIL: str = ""
+    RESEND_VERIFY_EMAIL_FROM_NAME: str = "Roots"
+
+    # =========================================================================
     # CORS — Fixed: safe defaults + robust parser
     # =========================================================================
     # Explicit dev origins so the list is never empty in development.
