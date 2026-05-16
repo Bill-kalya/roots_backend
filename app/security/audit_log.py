@@ -153,7 +153,7 @@ class AuditService:
         
         # Unauthorized access attempts
         if (log_entry["status"] == "failure" and 
-            "permission" in log_entry.get("error_message", "").lower()):
+            "permission" in (log_entry.get("error_message") or "").lower()):
             await self._alert_unauthorized_access(log_entry)
         
         # Bulk operations

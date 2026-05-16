@@ -63,14 +63,28 @@ class User(Base, TimestampMixin):
         """Check if user has required role"""
         return self.role.value in required_roles
     
-    def is_admin(self) -> bool:
+    def check_is_admin(self) -> bool:
         return self.role == UserRole.ADMIN
-    
-    def is_merchant(self) -> bool:
+
+    def check_is_merchant(self) -> bool:
         return self.role == UserRole.MERCHANT
-    
-    def is_user(self) -> bool:
+
+    def check_is_user(self) -> bool:
         return self.role == UserRole.USER
+
+    # --- Backwards-compatible boolean properties for schemas/routes ---
+    # Pydantic schema expects attribute-style access (e.g., `user.is_admin`).
+    @property
+    def is_admin(self) -> bool:  # noqa: D401
+        return self.check_is_admin()
+
+    @property
+    def is_merchant(self) -> bool:  # noqa: D401
+        return self.check_is_merchant()
+
+    @property
+    def is_user(self) -> bool:  # noqa: D401
+        return self.check_is_user()
     
     def promote_to_merchant(self, store_name: str = None, store_description: str = None):
         """Promote user to merchant"""

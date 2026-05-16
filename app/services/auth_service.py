@@ -51,7 +51,8 @@ class SessionManager:
     ) -> str:
         """Create new session with device fingerprint"""
         
-        session_id = str(UUID(uuid4()))
+        # CORRECT: uuid4() already returns a UUID; wrapping in UUID() breaks on Python 3.14
+        session_id = str(uuid4())
         session_data = {
             "user_id": str(user_id),
             "device_id": device_id,
@@ -239,7 +240,7 @@ class AuthService:
             full_name=user_data.full_name,
             is_active=False,
             is_verified=False,
-            is_admin=False,
+
             verification_token=token,
             verification_token_expires=expires,
             mfa_enabled=False,

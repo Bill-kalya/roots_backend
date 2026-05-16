@@ -4,8 +4,10 @@ from typing import List, Optional
 from uuid import UUID
 from datetime import datetime
 from app.core.security import PasswordValidator
+from app.models.user import UserRole
 
 class UserBase(BaseModel):
+
     email: EmailStr
     full_name: str
 
@@ -22,6 +24,10 @@ class UserCreate(UserBase):
     password: str
     enable_mfa: bool = False
     interests: list[str] = []
+
+    role: UserRole = UserRole.USER  # default to regular user
+
+
 
     @model_validator(mode="before")
     @classmethod

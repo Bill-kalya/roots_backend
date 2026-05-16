@@ -88,28 +88,48 @@ async def register(
 
 @router.get("/verify-email")
 async def verify_email(token: str, db: AsyncSession = Depends(get_db)):
+    """Verify email address using token.
 
-    """Verify email address using token."""
+    Returns JSON only (no redirects) to avoid cross-origin redirect/CORS issues.
+    Frontend is responsible for navigation after calling this endpoint.
+    """
     query = select(User).where(User.verification_token == token)
     result = await db.execute(query)
     user = result.scalar_one_or_none()
 
     if not user:
-        raise HTTPException(status_code=400, detail="Invalid verification token")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": "INVALID_OR_EXPIRED_TOKEN",
+                "message": "Verification link is invalid or has expired. Please request a new one.",
+            },
+        )
 
     if user.verification_token_expires and user.verification_token_expires < datetime.utcnow():
-        raise HTTPException(status_code=400, detail="Verification token expired")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": "INVALID_OR_EXPIRED_TOKEN",
+                "message": "Verification link is invalid or has expired. Please request a new one.",
+            },
+        )
 
-    if user.is_verified:
-        raise HTTPException(status_code=400, detail="Email already verified")
+    # Idempotent: if already verified, still return success.
+    if not user.is_verified:
+        user.is_active = True
+        user.is_verified = True
+        user.verification_token = None
+        user.verification_token_expires = None
+        await db.commit()
 
-    user.is_active = True
-    user.is_verified = True
-    user.verification_token = None
-    user.verification_token_expires = None
-    await db.commit()
+    return {
+        "success": True,
+        "verified": True,
+        "message": "Email verified successfully.",
+    }
 
-    return {"message": "Email verified successfully. You can now log in."}
+
 
 
 @router.post("/resend-verification")
@@ -260,4 +280,3 @@ async def validate_password_strength(
 async def get_me(current_user=Depends(get_current_user)):
     """Get current user info"""
     return current_user
-
