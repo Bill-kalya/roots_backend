@@ -11,7 +11,7 @@ async def get_merchant_orders(
     """Get orders for merchant's products"""
     return {"message": "Merchant orders - coming soon"}
 
-@router.patch("/{order_id}/status")
+@router.put("/{order_id}/status")
 async def update_order_status(
     order_id: str,
     current_user: User = Depends(require_merchant)

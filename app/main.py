@@ -285,6 +285,8 @@ app.include_router(user_orders.router, prefix="/api/user/orders", tags=["User - 
 app.include_router(merchant_products.router, prefix="/api/merchant/products", tags=["Merchant - Products"])
 app.include_router(merchant_orders.router, prefix="/api/merchant/orders", tags=["Merchant - Orders"])
 app.include_router(merchant_analytics.router, prefix="/api/merchant/analytics", tags=["Merchant - Analytics"])
+# NOTE: merchant analytics router provides GET / for /api/merchant/analytics
+
 
 # ============ ADMIN ROUTES (Admin Role Required) ============
 app.include_router(admin_dashboard.router, prefix="/api/admin/dashboard", tags=["Admin - Dashboard"])
