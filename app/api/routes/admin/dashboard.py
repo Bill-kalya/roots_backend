@@ -35,7 +35,7 @@ async def admin_stats(
 
     low_stock = (
         await db.scalar(
-            select(func.count()).select_from(Product).where(Product.stock_quantity <= 5)
+            select(func.count()).select_from(Product).where(Product.stock <= 5)
         )
         or 0
     )
