@@ -88,6 +88,8 @@ class UserResponse(UserBase):
     id: UUID
     is_active: bool
     is_admin: bool
+    role: UserRole
+    merchant_approved: bool
     created_at: datetime
 
 

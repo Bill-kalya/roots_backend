@@ -6,9 +6,16 @@ from app.db.session import get_db
 from app.core.dependencies import require_admin
 from app.models.user import User, UserRole
 from app.schemas.user import UserResponse
+from pydantic import BaseModel
+
+
+class RoleUpdate(BaseModel):
+    role: str
+
 
 router = APIRouter()
 
+@router.get("")
 @router.get("/")
 async def list_users(
     current_user: User = Depends(require_admin),
@@ -25,7 +32,7 @@ async def list_users(
 @router.patch("/{user_id}/role")
 async def change_user_role(
     user_id: UUID,
-    role: str,
+    body: RoleUpdate,
     current_user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db)
 ):
@@ -37,10 +44,19 @@ async def change_user_role(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
+    role = body.role
+    
     if role.upper() not in ["USER", "MERCHANT", "ADMIN"]:
         raise HTTPException(status_code=400, detail="Invalid role")
     
     user.role = UserRole[role.upper()]
+
+    # Keep merchant approval in sync with role
+    if role.upper() == "MERCHANT":
+        user.merchant_approved = True
+    elif role.upper() == "USER":
+        user.merchant_approved = False
+
     await db.commit()
     
     return {"message": f"User role updated to {role}", "user_id": str(user_id)}
