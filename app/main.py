@@ -145,7 +145,7 @@ app = FastAPI(
     title="Roots API - Enterprise Edition with RBAC",
 
     version="2.0.0",
-    redirect_slashes=False,
+    redirect_slashes=True,
     description="Enterprise E-commerce Backend with Role-Based Access Control",
     docs_url="/api/docs",
     redoc_url="/api/redoc",

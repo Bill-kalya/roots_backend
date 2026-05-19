@@ -1,9 +1,8 @@
-- [x] Replace `app/api/routes/admin/dashboard.py` to return flat admin dashboard stats fields expected by frontend.
-- [x] Fix stats computation to match existing models (`Order.total` and `OrderItem` for top products).
-- [x] Ensure admin orders endpoint exists at `GET /api/admin/dashboard/orders` with correct path and response shape.
-- [x] Sanity-check route mounting in `app/main.py` / admin router init.
-- [x] Run compile/import checks and (if possible) start server to verify endpoints.
+# TODO
 
+- [x] Fix AttributeError in token refresh flow by passing the real `request` into `AuthService.refresh_tokens`.
+- [x] Add defensive handling in `AuthService.refresh_tokens` for cases where `request` is None (safe IP/fingerprint extraction).
 
-
+- [ ] Run a quick lint/test (or start server) and verify `/api/auth/refresh` no longer crashes.
+- [ ] (Follow-up) Investigate intermittent DB connection timeout from `get_write_session` pooling/timeouts.
 

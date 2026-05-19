@@ -7,6 +7,9 @@ from app.core.dependencies import require_admin
 from app.models.user import User, UserRole
 from app.schemas.user import UserResponse
 from pydantic import BaseModel
+from app.services.auth_service import AuthService
+from app.core.dependencies import get_redis
+
 
 
 class RoleUpdate(BaseModel):
@@ -34,21 +37,27 @@ async def change_user_role(
     user_id: UUID,
     body: RoleUpdate,
     current_user: User = Depends(require_admin),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    redis=Depends(get_redis),
 ):
-    """Change user role (Admin only)"""
+    """Change user role (Admin only)
+
+    Permanent fix for role-change JWT mismatch:
+    invalidate the user's existing sessions + refresh tokens so they are forced to re-login
+    (and will receive a new access token containing the updated role claim).
+    """
     query = select(User).where(User.id == user_id)
     result = await db.execute(query)
     user = result.scalar_one_or_none()
-    
+
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     role = body.role
-    
+
     if role.upper() not in ["USER", "MERCHANT", "ADMIN"]:
         raise HTTPException(status_code=400, detail="Invalid role")
-    
+
     user.role = UserRole[role.upper()]
 
     # Keep merchant approval in sync with role
@@ -58,8 +67,19 @@ async def change_user_role(
         user.merchant_approved = False
 
     await db.commit()
-    
-    return {"message": f"User role updated to {role}", "user_id": str(user_id)}
+
+    # Invalidate existing sessions/refresh tokens for this user.
+    # AuthService handles the Redis session + refresh token cleanup.
+    service = AuthService(db, redis)
+    await service.logout_all_devices(user_id)
+
+    return {
+        "message": f"User role updated to {role}",
+        "user_id": str(user_id),
+        "requires_relogin": True,
+        "sessions_invalidated": True,
+    }
+
 
 @router.patch("/{user_id}/toggle-status")
 async def toggle_user_status(

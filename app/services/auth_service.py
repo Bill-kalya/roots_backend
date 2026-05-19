@@ -461,12 +461,14 @@ class AuthService:
         fingerprint = payload.get("fingerprint")
         
         # Verify session exists and is valid
+        ip_address = request.client.host if request and request.client else "unknown"
+
         session = await self.session_manager.validate_session(
             session_id,
             fingerprint,
-            request.client.host
+            ip_address
         )
-        
+
         if not session:
             return None
         
@@ -476,7 +478,12 @@ class AuthService:
             return None
         
         # Generate new tokens
-        new_fingerprint = self.fingerprinter.generate_fingerprint(request)
+        if request:
+            new_fingerprint = self.fingerprinter.generate_fingerprint(request)
+        else:
+            # Fallback when refresh is called without request context
+            new_fingerprint = fingerprint or str(user_id)
+
         return await self._create_tokens(UUID(user_id), session_id, new_fingerprint)
     
     async def logout(self, user_id: UUID, session_id: str):

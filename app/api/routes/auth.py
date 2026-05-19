@@ -222,13 +222,18 @@ async def verify_mfa_login(
 
 @router.post("/refresh", response_model=Token)
 async def refresh_token(
+    request: Request,
     refresh_data: TokenRefresh,
     db: AsyncSession = Depends(get_db),
     redis: aioredis.Redis = Depends(get_redis),
 ):
     """Refresh access token."""
     service = AuthService(db, redis)
-    tokens = await service.refresh_tokens(refresh_data.refresh_token, request=None, current_session_id="")
+    tokens = await service.refresh_tokens(
+        refresh_data.refresh_token,
+        request=request,
+        current_session_id="",
+    )
 
     if not tokens:
         raise HTTPException(

@@ -7,6 +7,23 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi import HTTPException
 
+
+def _make_serializable(obj):
+    """Recursively make an object JSON-serializable.
+
+    FastAPI/Pydantic validation errors can include raw request input (e.g. uploaded file bytes).
+    Those bytes cannot be JSON-encoded; we replace them with a safe placeholder.
+    """
+    if isinstance(obj, bytes):
+        return f"<bytes len={len(obj)}>"
+    if isinstance(obj, dict):
+        return {k: _make_serializable(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_make_serializable(i) for i in obj]
+    return obj
+
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -16,7 +33,7 @@ def _json_error(request: Request, status_code: int, error: str, message: str, de
         "message": message,
     }
     if details is not None:
-        payload["details"] = details
+        payload["details"] = _make_serializable(details)
     # Keep request_id in logs/clients via middleware header
     request_id = request.headers.get("X-Request-ID")
     if request_id:
