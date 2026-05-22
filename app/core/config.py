@@ -106,7 +106,12 @@ class Settings(BaseSettings):
     # Frontend URL used to build verify links
     FRONTEND_URL: str = "http://localhost:5173"
 
+    # Backend public base URL used to build fully-qualified asset links
+    # (e.g. http://localhost:8000/uploads/<filename>)
+    PUBLIC_API_BASE_URL: str = "http://localhost:8000"
+
     # =========================================================================
+
     # EMAIL (Resend)
     # =========================================================================
     RESEND_API_KEY: str = ""

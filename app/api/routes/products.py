@@ -8,6 +8,48 @@ from app.schemas.common import PaginationParams
 from app.core.dependencies import get_redis
 from uuid import UUID
 import json
+import re
+
+
+def _normalize_image_url(image_url: str) -> str:
+    """Normalize image_url to the frontend-required form: /uploads/<file>.
+
+    Strips any scheme/host (e.g. http://.../uploads/x.jpg) and ensures we
+    never return /api/uploads/... style paths.
+    """
+    if not image_url:
+        return "/uploads/"
+
+    # Strip scheme/host if present
+    image_url = re.sub(r"^https?://[^/]+", "", image_url)
+
+    # Remove any leading /api prefix
+    image_url = re.sub(r"^/api/", "/", image_url)
+
+    # Ensure it starts with /uploads/
+    if "/uploads/" in image_url:
+        image_url = image_url.split("/uploads/", 1)[1]
+        image_url = f"/uploads/{image_url}"
+    elif not image_url.startswith("/uploads/"):
+        # Best-effort fallback: keep only the basename
+        basename = image_url.rsplit("/", 1)[-1]
+        image_url = f"/uploads/{basename}"
+
+    return image_url
+
+
+def _normalize_product_for_ui(p: dict) -> dict:
+    # Ensure origin always exists for UI cards
+    if not p.get("origin"):
+        p["origin"] = "Unknown"
+
+    # Ensure required image_url formatting
+    if p.get("image_url"):
+        p["image_url"] = _normalize_image_url(str(p["image_url"]))
+
+    return p
+
+
 
 router = APIRouter()
 
@@ -44,9 +86,12 @@ async def get_products(
     
     # Convert to response models
     items = [ProductResponse.model_validate(p) for p in products]
-    
+
+    # Normalize product payload for UI contract
+    normalized_items = [_normalize_product_for_ui(i.model_dump()) for i in items]
+
     response = ProductListResponse(
-        items=items,
+        items=normalized_items,
         total=total,
         page=page,
         limit=limit,

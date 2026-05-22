@@ -2,16 +2,28 @@ from fastapi import APIRouter, Depends, HTTPException, status, Form, File, Uploa
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
-from uuid import UUID
+from uuid import UUID, uuid4
+from pathlib import Path
+import os
+
+from urllib.parse import quote
+
 from app.db.session import get_db
 from app.core.dependencies import require_merchant
 from app.models.user import User
 from app.models.product import Product
 from app.schemas.product import ProductResponse
 from app.services.product_service import ProductService
+from app.core.config import settings
+
+
 
 
 router = APIRouter()
+
+# Local filesystem upload target (served by FastAPI via /uploads)
+UPLOADS_DIR = Path(os.getenv("UPLOADS_DIR", "uploads")).resolve()
+
 
 @router.post("", response_model=ProductResponse, status_code=status.HTTP_201_CREATED)
 @router.post("/", response_model=ProductResponse, status_code=status.HTTP_201_CREATED)
@@ -32,11 +44,24 @@ async def create_product(
     Accepts multipart/form-data payloads because the frontend uploads an image file.
     """
 
-    # NOTE: This repo currently stores image as `image_url` string.
-    # If you later add S3/Cloudinary upload, replace the placeholder below with a real URL.
-    image_url = image.filename
+    # Save uploaded image to local filesystem and store a fetchable URL.
+    # FastAPI will serve this via StaticFiles at `/uploads`.
+    ext = Path(image.filename).suffix or ".jpg"
+    safe_name = f"{uuid4().hex}{ext}"
+    UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+    file_path = UPLOADS_DIR / safe_name
+
+    contents = await image.read()
+    file_path.write_bytes(contents)
+
+    # Store FULL public URL (production-grade) - never store relative paths in DB
+    # IMPORTANT: URL encode filename to safely handle spaces and '#' characters.
+    image_url = f"{settings.PUBLIC_API_BASE_URL}/uploads/{quote(safe_name)}"
+
+
 
     new_product = Product(
+
         name=name,
         description=description,
         price=price,
@@ -101,7 +126,21 @@ async def update_merchant_product(
     product.is_featured = is_featured
 
     if image is not None:
-        product.image_url = image.filename
+        ext = Path(image.filename).suffix or ".jpg"
+        safe_name = f"{uuid4().hex}{ext}"
+        UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+        file_path = UPLOADS_DIR / safe_name
+
+        contents = await image.read()
+        file_path.write_bytes(contents)
+
+        # Store FULL public URL (production-grade) - never store relative paths in DB
+        # IMPORTANT: URL encode filename to safely handle spaces and '#' characters.
+        product.image_url = f"{settings.PUBLIC_API_BASE_URL}/uploads/{quote(safe_name)}"
+
+
+
+
 
     await db.commit()
     await db.refresh(product)

@@ -1,5 +1,7 @@
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from contextlib import asynccontextmanager
@@ -268,6 +270,26 @@ async def metrics():
 
 # Health endpoints
 app.include_router(health_router, prefix="/health", tags=["Health"])
+
+# Serve uploaded images from local filesystem.
+# This must exist for frontend URLs like /uploads/<filename>.
+UPLOADS_DIR = os.getenv("UPLOADS_DIR", "uploads")
+# Use absolute path for production reliability.
+uploads_dir_path = os.path.abspath(UPLOADS_DIR)
+try:
+    app.mount(
+        "/uploads",
+        StaticFiles(directory=uploads_dir_path, html=False),
+        name="uploads",
+    )
+    logger.info(f"Static /uploads mounted from: {uploads_dir_path}")
+except Exception as e:
+    # Fail-soft on misconfiguration so the API can still start.
+    logger.error(f"Failed to mount static /uploads from {uploads_dir_path}: {e}")
+
+
+
+
 
 # ============ PUBLIC ROUTES (No Authentication) ============
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
