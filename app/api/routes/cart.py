@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Response, Header
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
-import hashlib
 from uuid import UUID
 from app.db.session import get_db
 from app.services.cart_service import CartService
@@ -13,10 +12,7 @@ from redis import asyncio as aioredis
 
 router = APIRouter()
 
-def generate_etag(cart: CartResponse) -> str:
-    """Generate ETag based on cart content"""
-    content = f"{cart.total_items}:{cart.subtotal}:{hashlib.md5(str([(i.product_id, i.quantity) for i in cart.items]).encode()).hexdigest()}"
-    return hashlib.md5(content.encode()).hexdigest()
+
 
 @router.get("", response_model=CartResponse)
 async def get_cart(
@@ -26,25 +22,29 @@ async def get_cart(
     redis: aioredis.Redis = Depends(get_redis),
     if_none_match: Optional[str] = Header(None)
 ):
-    """Get current user's cart with ETag support"""
+    """Get current user's cart with fast version-based ETag"""
     
     service = CartService(redis)
-    cart = await service.get_cart(current_user.id)
-    
-    # Generate ETag
-    etag = generate_etag(cart)
-    response.headers["ETag"] = etag
-    
-    # Check If-None-Match header
+
+    # Fast path: check version from Redis before loading cart
+    version = await service.get_cart_version(current_user.id)
+    etag = f'W/"{current_user.id}-{version}"'
+
     if if_none_match and if_none_match == etag:
-        response.status_code = status.HTTP_304_NOT_MODIFIED
-        return Response(status_code=status.HTTP_304_NOT_MODIFIED)
-    
-    # Add cache headers
+        return Response(
+            status_code=status.HTTP_304_NOT_MODIFIED,
+            headers={"ETag": etag}
+        )
+
+    # Slow path: client needs fresh data
+    cart = await service.get_cart(current_user.id)
+
+    response.headers["ETag"] = etag
     response.headers["Cache-Control"] = "private, max-age=0, must-revalidate"
     response.headers["Vary"] = "Authorization"
-    
+
     return cart
+
 
 @router.post("/items", response_model=CartResponse)
 async def update_cart_item(

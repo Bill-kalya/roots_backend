@@ -47,6 +47,14 @@ def _normalize_product_for_ui(p: dict) -> dict:
     if p.get("image_url"):
         p["image_url"] = _normalize_image_url(str(p["image_url"]))
 
+    # Normalize every image in gallery too
+    if p.get("gallery"):
+        p["gallery"] = [_normalize_image_url(str(g)) for g in p["gallery"] if g]
+
+    # Ensure arrays are never None
+    p.setdefault("materials", [])
+    p.setdefault("gallery", [])
+
     return p
 
 

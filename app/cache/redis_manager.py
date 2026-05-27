@@ -20,7 +20,9 @@ class RedisManager:
     async def initialize(self):
         """Initialize Redis connection"""
         REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
-        self._client = aioredis.from_url(REDIS_URL)
+        # decode_responses=True ensures keys/values are returned as str (avoid bytes/str mismatches)
+        self._client = aioredis.from_url(REDIS_URL, decode_responses=True)
+
         
         # Test connection
         await self._client.ping()

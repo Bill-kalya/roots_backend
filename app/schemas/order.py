@@ -11,7 +11,21 @@ class OrderItemBase(BaseModel):
     quantity: int
 
 class OrderCreate(BaseModel):
+    # Shipping fee is the only field used by the current OrderService implementation.
+    # We extend this schema to carry checkout details so POST /api/orders can
+    # initialize payments server-side.
     shipping_fee: Decimal = Decimal("0.00")
+
+    # Checkout fields (server-side use only; frontend must not be price-authoritative).
+    payment_method: str  # "mpesa" | "paypal"
+    delivery: dict
+
+    # M-Pesa
+    mpesa_phone: str | None = None
+
+    # PayPal
+    cancel_url: str | None = None
+    success_url: str | None = None
 
 class OrderResponse(BaseModel):
     id: UUID

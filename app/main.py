@@ -25,6 +25,9 @@ from app.middleware.circuit_breaker import circuit_breakers
 from app.monitoring.health import router as health_router
 from app.core.metrics import get_metrics
 from app.api.routes import auth, newsletter, testimonials, products as public_products, cart
+from app.api.routes.merchant.public import router as merchant_public_router
+
+from app.api.routes.chat import router as chat_router
 # Role-based route imports
 from app.api.routes.user import products as user_products, profile as user_profile, orders as user_orders
 from app.api.routes.merchant import products as merchant_products, orders as merchant_orders, analytics as merchant_analytics
@@ -35,6 +38,7 @@ from app.api.errors import (
     starlette_http_exception_handler,
     global_exception_handler,
 )
+
 
 
 logger = logging.getLogger(__name__)
@@ -296,6 +300,13 @@ app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(newsletter.router, prefix="/api/newsletter", tags=["Newsletter"])
 app.include_router(testimonials.router, prefix="/api/testimonials", tags=["Testimonials"])
 app.include_router(public_products.router, prefix="/api/products", tags=["Public Products"])
+app.include_router(merchant_public_router, prefix="/api/merchants", tags=["Public Merchants"])
+
+
+# ============ Chat (WebSocket) ============
+app.include_router(chat_router)
+
+
 
 # ============ USER ROUTES (Authenticated Users) ============
 app.include_router(cart.router, prefix="/api/cart", tags=["Cart"])

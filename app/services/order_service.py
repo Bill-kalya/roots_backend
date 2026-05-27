@@ -252,10 +252,12 @@ class OrderService:
         # Commit inventory reservation
         await self.inventory.commit_reservation(order_id)
         
-        # Update order status
+        # Update order status + provider payment reference
         order.status = OrderStatus.PAID
-        order.payment_intent_id = payment_intent_id
+        # This repo uses Order.payment_reference (not payment_intent_id)
+        order.payment_reference = payment_intent_id
         order.paid_at = datetime.utcnow()
+
         
         await self.db.commit()
         await self.db.refresh(order)

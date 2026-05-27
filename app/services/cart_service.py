@@ -28,6 +28,12 @@ class CartService:
     
     def _get_cart_version_key(self, user_id: UUID) -> str:
         return f"cart:version:{user_id}"
+
+    async def get_cart_version(self, user_id: UUID) -> str:
+        """Get cart version from Redis for fast ETag generation"""
+        version_key = self._get_cart_version_key(user_id)
+        version = await self.redis.get(version_key)
+        return version if version else "0"
     
     async def get_cart(self, user_id: UUID, use_cache: bool = True) -> CartResponse:
         """Get user's cart with optimistic locking"""
@@ -161,7 +167,9 @@ class CartService:
         }
         
         await self.redis.setex(cart_key, self.cart_ttl, json.dumps(new_cart))
-        await self.redis.setex(version_key, self.cart_ttl, "1")
+        current = await self.redis.get(version_key)
+        new_version = str(int(current or 0) + 1)
+        await self.redis.setex(version_key, self.cart_ttl, new_version)
         
         # Clear anonymous cart
         await self.redis.delete(f"cart:anonymous:{anonymous_cart.get('session_id', '')}")
@@ -178,7 +186,7 @@ class CartService:
         version_key = self._get_cart_version_key(user_id)
         
         await self.redis.delete(cart_key)
-        await self.redis.delete(version_key)
+        await self.redis.setex(version_key, self.cart_ttl, "0")
         
         # Clear from DB
         if self.db:
@@ -257,8 +265,14 @@ class CartService:
         
         abandoned = []
         for key in keys:
+            # Redis may return keys as bytes depending on client configuration.
+            # Normalize to str to avoid: startswith first arg must be bytes or a tuple of bytes, not str
+            if isinstance(key, bytes):
+                key = key.decode("utf-8", errors="ignore")
+
             if key.startswith("cart:version:"):
                 continue
+
             
             cart_data = await self.redis.get(key)
             if cart_data:
@@ -300,8 +314,14 @@ class CartService:
         
         expired_count = 0
         for key in keys:
+            # Redis may return keys as bytes depending on client configuration.
+            # Normalize to str to avoid bytes/str mismatch in startswith.
+            if isinstance(key, bytes):
+                key = key.decode("utf-8", errors="ignore")
+
             if key.startswith("cart:version:"):
                 continue
+
             
             ttl = await self.redis.ttl(key)
             if ttl <= 0:

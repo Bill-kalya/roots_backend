@@ -8,8 +8,15 @@ from app.core.dependencies import get_current_active_user, get_redis, get_curren
 from app.services.order_service import OrderService
 from app.services.cart_service import CartService
 from app.schemas.order import OrderCreate, OrderResponse, OrderListResponse
+
 from app.models.user import User
 from redis import asyncio as aioredis
+from app.models.payment import Payment, PaymentStatus
+from app.security.audit_log import audit_service
+
+from app.services.mpesa_service import MpesaService
+from app.services.paypal_service import PayPalService
+
 
 router = APIRouter()
 
@@ -188,12 +195,12 @@ async def cancel_order(
     from app.models.order import OrderStatus
     
     order_service = OrderService(db, redis)
-    order = await order_service.update_order_status(
+    order = await order_service.cancel_order(
         order_id,
-        OrderStatus.CANCELLED,
         current_user.id,
-        current_user.is_admin
+        reason="user_cancelled"
     )
+
     
     if not order:
         raise HTTPException(

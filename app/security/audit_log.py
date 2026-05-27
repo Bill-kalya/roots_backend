@@ -114,10 +114,19 @@ class AuditService:
         except Exception as e:
             # Use the audit logger/structured logger so failures are observable,
             # but do not re-raise.
+            #
+            # If the audit_logs table/migration is missing, the request should not fail.
+            # (We intentionally swallow this specific class of DB error.)
             try:
                 from app.core.logging import audit_logger
+                from sqlalchemy.exc import ProgrammingError
 
-                audit_logger.logger.error(f"Failed to store audit log in DB: {e}")
+                if isinstance(e, ProgrammingError) and "relation \"audit_logs\" does not exist" in str(e):
+                    audit_logger.logger.warning(
+                        "audit_logs table is missing; skipping audit persistence"
+                    )
+                else:
+                    audit_logger.logger.error(f"Failed to store audit log in DB: {e}")
             except Exception:
                 # Fallback: do nothing if even audit_logger isn't available.
                 pass
