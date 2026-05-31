@@ -199,10 +199,84 @@ class BruteForceProtector:
         return False, 0
 
 class AuthService:
-    """Enterprise authentication service with MFA, session management, and brute force protection"""
-    
     def __init__(self, db: AsyncSession, redis_client):
         self.db = db
+        self.redis = redis_client
+        self.session_manager = SessionManager(redis_client)
+        self.fingerprinter = DeviceFingerprinter()
+        self.brute_force = BruteForceProtector(redis_client)
+        self.rate_limiter = RateLimitManager(redis_client)
+
+    async def request_password_reset(self, email: str) -> None:
+        """Generate reset token and send email. Always succeeds silently."""
+        import secrets
+        from datetime import datetime, timedelta
+
+        query = select(User).where(User.email == email)
+        result = await self.db.execute(query)
+        user = result.scalar_one_or_none()
+
+        if not user:
+            return  # Silent — no email enumeration
+
+        token = secrets.token_urlsafe(32)
+        expires = datetime.utcnow() + timedelta(hours=1)
+
+        # Store in Redis with 1-hour TTL
+        await self.redis.setex(
+            f"pwd_reset:{token}",
+            3600,
+            str(user.id)
+        )
+
+        # Send email — reuse your existing email service
+        from app.core.config import settings
+        reset_url = f"{settings.FRONTEND_URL}/reset-password?token={token}"
+        await self._send_password_reset_email(user.email, user.full_name, reset_url)
+
+    async def _send_password_reset_email(self, email: str, name: str, reset_url: str) -> None:
+        """Send password reset email via your existing email service."""
+        from app.services.email_service import EmailService
+        email_service = EmailService()
+        await email_service.send_email(
+            to=email,
+            subject="Reset your Roots password",
+            html=f"""
+                <p>Hi {name},</p>
+                <p>Click the link below to reset your password. This link expires in 1 hour.</p>
+                <p><a href=\"{reset_url}\">{reset_url}</a></p>
+                <p>If you didn't request this, ignore this email.</p>
+            """,
+        )
+
+    async def reset_password(self, token: str, new_password: str) -> bool:
+        """Validate reset token and update password."""
+        from app.core.security import get_password_hash
+
+        user_id = await self.redis.get(f"pwd_reset:{token}")
+        if not user_id:
+            return False  # Token invalid or expired
+
+        query = select(User).where(User.id == user_id)
+        result = await self.db.execute(query)
+        user = result.scalar_one_or_none()
+
+        if not user:
+            return False
+
+        user.hashed_password = get_password_hash(new_password)
+        await self.db.commit()
+
+        # Invalidate token immediately after use
+        await self.redis.delete(f"pwd_reset:{token}")
+
+        return True
+
+    async def register_user(
+        self,
+        user_data: UserCreate,
+        request = None
+    ) -> Optional[UserResponse]:
         self.redis = redis_client
         self.session_manager = SessionManager(redis_client)
         self.fingerprinter = DeviceFingerprinter()

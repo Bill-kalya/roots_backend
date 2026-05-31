@@ -20,6 +20,13 @@ class PasswordCheckResponse(BaseModel):
     checks: dict = {}
     suggestion: str = "Use 8+ chars with Upper, lower, number, special char. Avoid common words."
 
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
 class UserCreate(UserBase):
     password: str
     enable_mfa: bool = False

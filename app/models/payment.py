@@ -1,39 +1,31 @@
-from sqlalchemy import Column, String, Numeric, ForeignKey, DateTime, Enum, Text
+from sqlalchemy import Column, String, Numeric, ForeignKey, DateTime, Text
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
-from datetime import datetime
-
-from app.db.base import Base, TimestampMixin
-
 import enum
+from datetime import datetime, timezone
+from app.db.base import Base, TimestampMixin
 
 
 class PaymentStatus(str, enum.Enum):
-    PENDING = "pending"
-    COMPLETED = "completed"
-    FAILED = "failed"
-    CANCELLED = "cancelled"
+    PENDING = 'pending'
+    COMPLETED = 'completed'
+    FAILED = 'failed'
+    CANCELLED = 'cancelled'
 
 
 class Payment(Base, TimestampMixin):
-    __tablename__ = "payments"
+    __tablename__ = 'payments'
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-
-    order_id = Column(UUID(as_uuid=True), ForeignKey("orders.id"), nullable=False, unique=True)
-
-    provider = Column(String(50), nullable=False)  # mpesa | paypal
+    order_id = Column(UUID(as_uuid=True), ForeignKey('orders.id'), nullable=True)
+    provider = Column(String(50), nullable=False)
     provider_transaction_id = Column(String(255), nullable=True, unique=True)
-
-    status = Column(Enum(PaymentStatus), default=PaymentStatus.PENDING, nullable=False)
-
+    status = Column(String(20), nullable=False, default='pending')
     amount = Column(Numeric(10, 2), nullable=False)
-    currency = Column(String(10), default="KES", nullable=False)
-
-    # Optional raw payload for troubleshooting/audit (store small JSON string)
+    currency = Column(String(10), default='KES', nullable=False)
+    phone = Column(String(20), nullable=True)
+    checkout_request_id = Column(String(255), nullable=True, unique=True, index=True)
+    mpesa_receipt = Column(String(100), nullable=True)
+    result_code = Column(String(10), nullable=True)
     raw_payload = Column(Text, nullable=True)
-
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-
-    # Relationships are intentionally omitted to avoid circular imports in this repo layout.
-
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)

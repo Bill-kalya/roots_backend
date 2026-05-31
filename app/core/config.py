@@ -12,6 +12,19 @@ class Settings(BaseSettings):
     # APPLICATION
     # =========================================================================
     APP_NAME: str = "Roots API"
+
+    # =========================================================================
+    # M-PESA
+    # =========================================================================
+    MPESA_CONSUMER_KEY: Optional[str] = None
+    MPESA_CONSUMER_SECRET: Optional[str] = None
+    MPESA_BUSINESS_SHORT_CODE: Optional[str] = None
+    MPESA_PASSKEY: Optional[str] = None
+    MPESA_TOKEN_URL: Optional[str] = None
+    MPESA_STK_URL: Optional[str] = None
+    MPESA_CALLBACK_URL: Optional[str] = None
+    MPESA_ACCOUNT_REFERENCE: str = "ROOTS"
+
     APP_VERSION: str = "1.0.0"
     ENVIRONMENT: str = "development"  # development | staging | production
     DEBUG: bool = False
@@ -256,12 +269,30 @@ class Settings(BaseSettings):
     # =========================================================================
     # PYDANTIC CONFIG
     # =========================================================================
+    # =========================================================================
+    # STRIPE — Payments
+    # =========================================================================
+    STRIPE_SECRET_KEY: Optional[str] = None
+    STRIPE_WEBHOOK_SECRET: Optional[str] = None
+    STRIPE_CURRENCY: str = "usd"
+
+    @model_validator(mode="after")
+    def stripe_safety_checks(self) -> "Settings":
+        """Stripe configuration.
+
+        Stripe isn’t wired up yet during early development, so we don’t fail
+        application startup when keys are missing.
+        """
+        return self
+
     model_config = ConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=True,
         extra="ignore",         # was "allow" — silently swallowing typos; now
     )                           # ignored so unknown keys don't pollute settings
+
+
 
 
 @lru_cache()

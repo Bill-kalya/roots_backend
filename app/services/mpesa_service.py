@@ -1,7 +1,9 @@
-import os
 import time
 import httpx
 import logging
+
+from app.core.config import settings
+
 
 logger = logging.getLogger(__name__)
 
@@ -10,14 +12,15 @@ class MpesaService:
     """M-Pesa Daraja STK Push integration (STK Push initiation)."""
 
     def __init__(self):
-        self.consumer_key = os.getenv("MPESA_CONSUMER_KEY")
-        self.consumer_secret = os.getenv("MPESA_CONSUMER_SECRET")
-        self.business_short_code = os.getenv("MPESA_BUSINESS_SHORT_CODE")
-        self.passkey = os.getenv("MPESA_PASSKEY")
-        self.stk_url = os.getenv("MPESA_STK_URL")
-        self.token_url = os.getenv("MPESA_TOKEN_URL")
-        self.callback_url = os.getenv("MPESA_CALLBACK_URL")
-        self.account_reference = os.getenv("MPESA_ACCOUNT_REFERENCE", "ROOTS")
+        self.consumer_key = settings.MPESA_CONSUMER_KEY
+        self.consumer_secret = settings.MPESA_CONSUMER_SECRET
+        self.business_short_code = settings.MPESA_BUSINESS_SHORT_CODE
+        self.passkey = settings.MPESA_PASSKEY
+        self.stk_url = settings.MPESA_STK_URL
+        self.token_url = settings.MPESA_TOKEN_URL
+        self.callback_url = settings.MPESA_CALLBACK_URL
+        self.account_reference = settings.MPESA_ACCOUNT_REFERENCE
+
 
         if not self.stk_url or not self.token_url:
             logger.warning("MPESA_STK_URL / MPESA_TOKEN_URL not set")
@@ -52,20 +55,13 @@ class MpesaService:
         token = await self._generate_token()
         timestamp = time.strftime("%Y%m%d%H%M%S")
 
-        password = f"{self.business_short_code}{self.passkey}{timestamp}"
-        # Daraja requires password base64-encoded; leaving as-is unless env provides encoding.
-        # Most deployments base64 the SHA256? We require explicit MPESA_PASSWORD_ENCODING strategy.
-        password_encoding = os.getenv("MPESA_PASSWORD_ENCODING", "base64_sha256")
-        if password_encoding == "base64_sha256":
-            import base64
-            import hashlib
+        # Daraja password = base64encode(ShortCode + Passkey + Timestamp)
+        # NOTE: Passkey must be EXACT (no quotes/spaces/newlines in env).
+        password_raw = f"{self.business_short_code}{self.passkey}{timestamp}"
+        import base64
+        password = base64.b64encode(password_raw.encode("utf-8")).decode("utf-8")
 
-            password = base64.b64encode(hashlib.sha256(password.encode()).digest()).decode()
-        else:
-            # Default: base64 raw concatenation
-            import base64
 
-            password = base64.b64encode(password.encode()).decode()
 
         payload = {
             "BusinessShortCode": self.business_short_code,
@@ -84,6 +80,15 @@ class MpesaService:
         headers = {"Authorization": f"Bearer {token}"}
         async with httpx.AsyncClient(timeout=30) as client:
             resp = await client.post(self.stk_url, json=payload, headers=headers)
+            import json
+
+            resp_text = resp.text
+            logger.warning(f"STK PAYLOAD SENT: {json.dumps(payload, indent=2)}")
+            logger.warning(
+                f"SAFARICOM RAW RESPONSE: {resp.status_code} - {resp_text}"
+            )
+
             resp.raise_for_status()
             return resp.json()
+
 

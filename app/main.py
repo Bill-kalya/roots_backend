@@ -26,8 +26,17 @@ from app.monitoring.health import router as health_router
 from app.core.metrics import get_metrics
 from app.api.routes import auth, newsletter, testimonials, products as public_products, cart
 from app.api.routes.merchant.public import router as merchant_public_router
-
 from app.api.routes.chat import router as chat_router
+from app.api.routes import mpesa
+from app.api.routes.payments_paypal import router as paypal_routes
+from app.api.routes.orders import router as order_router
+from app.api.routes.payments_stripe import router as stripe_routes
+
+
+
+
+
+
 # Role-based route imports
 from app.api.routes.user import products as user_products, profile as user_profile, orders as user_orders
 from app.api.routes.merchant import products as merchant_products, orders as merchant_orders, analytics as merchant_analytics
@@ -147,6 +156,7 @@ async def run_cart_expiration(cart_service):
 
 # Create FastAPI app
 app = FastAPI(
+
 
     title="Roots API - Enterprise Edition with RBAC",
 
@@ -296,15 +306,29 @@ except Exception as e:
 
 
 # ============ PUBLIC ROUTES (No Authentication) ============
+
+
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(newsletter.router, prefix="/api/newsletter", tags=["Newsletter"])
 app.include_router(testimonials.router, prefix="/api/testimonials", tags=["Testimonials"])
 app.include_router(public_products.router, prefix="/api/products", tags=["Public Products"])
 app.include_router(merchant_public_router, prefix="/api/merchants", tags=["Public Merchants"])
 
+# ============ M-PESA (Public) ============
+app.include_router(mpesa.router, prefix="/api/payments/mpesa", tags=["M-Pesa"])
+
+# ============ PayPal (Authenticated) ============
+app.include_router(paypal_routes, prefix="/api/payments/paypal", tags=["PayPal"])
 
 # ============ Chat (WebSocket) ============
+
 app.include_router(chat_router)
+
+# ============ Orders (Create) ============
+# Public create-order endpoint for checkout flow.
+# Uses app/api/routes/orders.py where create_order is mounted at @router.post("/").
+app.include_router(order_router, prefix="/api/orders", tags=["Orders"])
+
 
 
 

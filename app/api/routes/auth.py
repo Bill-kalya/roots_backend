@@ -16,7 +16,10 @@ from app.schemas.user import (
     PasswordCheckResponse,
     MFASetupResponse,
     MFAEnableEnrollRequest,
+    ForgotPasswordRequest,
+    ResetPasswordRequest,
 )
+
 
 from app.services.auth_service import AuthService
 from app.core.dependencies import get_current_user, get_redis
@@ -281,7 +284,51 @@ async def validate_password_strength(
     return PasswordCheckResponse(**result)
 
 
+@router.post("/forgot-password")
+async def forgot_password(
+    payload: ForgotPasswordRequest,
+    db: AsyncSession = Depends(get_db),
+    redis: aioredis.Redis = Depends(get_redis),
+):
+    """Request password reset. Always returns success to prevent email enumeration."""
+    service = AuthService(db, redis)
+    try:
+        await service.request_password_reset(payload.email)
+    except Exception:
+        pass  # Never reveal errors to client
+    return {"success": True, "message": "If an account exists, a reset link has been sent."}
+
+
+@router.post("/reset-password")
+async def reset_password(
+    payload: ResetPasswordRequest,
+    db: AsyncSession = Depends(get_db),
+    redis: aioredis.Redis = Depends(get_redis),
+):
+    """Reset password using token from email."""
+    service = AuthService(db, redis)
+
+    # Validate password strength before resetting
+    strength = await service.validate_password(payload.new_password)
+    if not strength.get("is_valid"):
+
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password does not meet requirements."
+        )
+
+    success = await service.reset_password(payload.token, payload.new_password)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Reset link is invalid or has expired."
+        )
+
+    return {"success": True, "message": "Password reset successfully."}
+
+
 @router.get("/me", response_model=UserResponse)
 async def get_me(current_user=Depends(get_current_user)):
     """Get current user info"""
     return current_user
+
