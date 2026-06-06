@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
+import json
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 from typing import List
@@ -72,23 +73,39 @@ async def create_order(
         for item in cart.items
     ]
     
-    order = await order_service.create_order(
-        current_user.id,
-        order_data,
-        cart_items_dict
-    )
-    
-    # Get order with items
-    order_with_items = await order_service.get_order_with_items(order.id)
-    
+    try:
+        order = await order_service.create_order(
+            current_user.id,
+            order_data,
+            cart_items_dict,
+        )
+    except ValueError as e:
+        detail = str(e)
+        try:
+            detail = json.loads(detail)
+        except Exception:
+            pass
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=detail)
+
+    # create_order returns a dict, not an ORM object — fetch the full record
+    order_with_items = await order_service.get_order_with_items(order["order_id"])
+
+    if not order_with_items:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Order was created but could not be retrieved"
+        )
+
+    order_obj = order_with_items["order"]
+
     return OrderResponse(
-        id=order.id,
-        user_id=order.user_id,
-        status=order.status.value,
-        subtotal=order.subtotal,
-        shipping_fee=order.shipping_fee,
-        total=order.total,
-        created_at=order.created_at,
+        id=order_obj.id,
+        user_id=order_obj.user_id,
+        status=order_obj.status.value,
+        subtotal=order_obj.subtotal,
+        shipping_fee=order_obj.shipping_fee,
+        total=order_obj.total,
+        created_at=order_obj.created_at,
         items=[
             {
                 "product_id": item.product_id,

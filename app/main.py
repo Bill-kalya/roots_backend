@@ -27,10 +27,14 @@ from app.core.metrics import get_metrics
 from app.api.routes import auth, newsletter, testimonials, products as public_products, cart
 from app.api.routes.merchant.public import router as merchant_public_router
 from app.api.routes.chat import router as chat_router
+from app.api.routes.conversations import router as conversations_router
+
 from app.api.routes import mpesa
 from app.api.routes.payments_paypal import router as paypal_routes
 from app.api.routes.orders import router as order_router
 from app.api.routes.payments_stripe import router as stripe_routes
+from app.api.routes.shipping import router as shipping_router
+
 
 
 
@@ -228,8 +232,17 @@ async def enterprise_middleware(request: Request, call_next):
     start_time = datetime.utcnow()
     
     # Rate limiting
-    response = await rate_limit_middleware(request, call_next)
-    
+    try:
+        response = await rate_limit_middleware(request, call_next)
+    except Exception as e:
+        # Never let exceptions escape this middleware without a response.
+        logger.error(f"Unhandled exception in enterprise_middleware: {e}", exc_info=True)
+        from fastapi.responses import JSONResponse
+        response = JSONResponse(
+            status_code=500,
+            content={"detail": "Internal server error"},
+        )
+
     # Add processing time header
     process_time = (datetime.utcnow() - start_time).total_seconds()
     response.headers["X-Process-Time"] = str(process_time)
@@ -326,8 +339,12 @@ app.include_router(chat_router)
 
 # ============ Orders (Create) ============
 # Public create-order endpoint for checkout flow.
-# Uses app/api/routes/orders.py where create_order is mounted at @router.post("/").
+# Uses app/api/routes/orders.py where create_order is mounted at @router.post("/" ).
 app.include_router(order_router, prefix="/api/orders", tags=["Orders"])
+
+# ============ Shipping (Rates) ============
+app.include_router(shipping_router, prefix="/api/shipping", tags=["Shipping"])
+
 
 
 

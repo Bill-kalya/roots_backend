@@ -19,8 +19,9 @@ logger = logging.getLogger(__name__)
 class InventoryReservation:
     """Inventory reservation system for order processing"""
     
-    def __init__(self, redis_client: aioredis.Redis):
+    def __init__(self, redis_client: aioredis.Redis, db: AsyncSession):
         self.redis = redis_client
+        self.db = db
         self.reservation_ttl = 900  # 15 minutes
     
     async def reserve_inventory(
@@ -129,9 +130,25 @@ class InventoryReservation:
             await self.redis.delete(reservation_key)
     
     async def _load_stock_from_db(self, product_id: str) -> int:
-        """Load stock from database"""
-        # Implementation would query PostgreSQL
-        return 0
+        """Load stock from database and populate Redis cache."""
+        # Local import to avoid circular imports
+        from sqlalchemy import select
+        from app.models.product import Product
+
+        # Read from DB
+        result = await self.db.execute(
+            select(Product.stock).where(Product.id == UUID(product_id))
+        )
+        stock = result.scalar_one_or_none()
+        quantity = int(stock) if stock is not None else 0
+
+        # Populate cache so next request doesn't hit DB
+        await self.redis.setex(
+            f"inventory:stock:{product_id}",
+            300,  # 5 minute TTL
+            quantity,
+        )
+        return quantity
     
     async def _decrement_stock_in_db(self, product_id: str, quantity: int):
         """Decrement stock in database"""
@@ -144,7 +161,7 @@ class OrderService:
     def __init__(self, db: AsyncSession, redis_client: aioredis.Redis):
         self.db = db
         self.redis = redis_client
-        self.inventory = InventoryReservation(redis_client)
+        self.inventory = InventoryReservation(redis_client, db)
     
     async def create_order(
         self, 
@@ -183,7 +200,11 @@ class OrderService:
         )
         
         if not reservation_success:
-            raise ValueError(f"Insufficient stock for items: {failed_items}")
+            # Structured business error so the frontend can react reliably
+            raise ValueError(json.dumps({
+                "code": "INSUFFICIENT_STOCK",
+                "items": failed_items,
+            }))
         
         # Create order with distributed transaction
         try:

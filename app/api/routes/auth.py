@@ -29,6 +29,7 @@ from app.models.user import User
 from datetime import datetime
 
 
+
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
@@ -199,6 +200,7 @@ async def verify_mfa_login(
     db: AsyncSession = Depends(get_db),
     redis: aioredis.Redis = Depends(get_redis),
 ):
+
     """Login step 2: verify MFA code and return JWT tokens."""
     service = AuthService(db, redis)
 
@@ -235,8 +237,8 @@ async def refresh_token(
     tokens = await service.refresh_tokens(
         refresh_data.refresh_token,
         request=request,
-        current_session_id="",
     )
+
 
     if not tokens:
         raise HTTPException(
@@ -251,24 +253,26 @@ async def refresh_token(
 async def logout(
     request: Request,
     current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
     redis: aioredis.Redis = Depends(get_redis),
 ):
-    """Logout user by revoking the provided access token (JWT blacklist)."""
+
+    """Logout user by revoking both access and refresh tokens."""
 
     auth_header = request.headers.get("authorization")
     if not auth_header or not auth_header.lower().startswith("bearer "):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing access token")
 
-    token = auth_header.split(" ", 1)[1].strip()
+    access_token = auth_header.split(" ", 1)[1].strip()
 
-    # Token blacklist is handled by TokenBlacklist (Redis). We blacklist only the access token.
-    from app.core.security import TokenBlacklist
-    blacklist = TokenBlacklist(redis)
-    # Access token expiry is short-lived; blacklist TTL can be set conservatively to access lifetime.
-    # If your system rotates/extends tokens, consider persisting exp claim and using it here.
-    await blacklist.blacklist_token(token, expires_in=60 * settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-
+    # Delegate logout revocation to the service
+    service = AuthService(db=db, redis=redis)
+    await service.logout(access_token)
     return {"success": True, "message": "Logged out successfully"}
+
+
+
+
 
 
 

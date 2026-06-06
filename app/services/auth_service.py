@@ -80,35 +80,43 @@ class SessionManager:
         self,
         session_id: str,
         fingerprint: str,
-        ip_address: str = None
+        ip_address: str = None,
+        strict_fingerprint: bool = True,
     ) -> Optional[Dict]:
-        """Validate session with fingerprint"""
-        
+        """Validate session with fingerprint.
+
+        - strict_fingerprint=True: fingerprint mismatch invalidates the session.
+        - strict_fingerprint=False: fingerprint mismatch is tolerated (use Redis refresh binding as truth).
+        """
+
         session_data = await self.redis.get(f"session:{session_id}")
         if not session_data:
             return None
-        
+
         session = json.loads(session_data)
-        
-        # Check fingerprint match
-        if session["fingerprint"] != fingerprint:
-            await self.invalidate_session(session_id)
-            return None
-        
+
+        # Fingerprint match
+        if session.get("fingerprint") != fingerprint:
+            if strict_fingerprint:
+                await self.invalidate_session(session_id)
+                return None
+            # Non-strict mode: allow drift; refresh binding will be checked separately.
+            await self.flag_suspicious_activity(session_id, "Fingerprint drift")
+
         # Check IP if provided (optional)
-        if ip_address and session["ip_address"] != ip_address:
-            # IP changed - could be suspicious
+        if ip_address and session.get("ip_address") != ip_address:
             await self.flag_suspicious_activity(session_id, "IP changed")
-        
+
         # Update last activity
         session["last_activity"] = datetime.utcnow().isoformat()
         await self.redis.setex(
             f"session:{session_id}",
             7 * 24 * 3600,
-            json.dumps(session)
+            json.dumps(session),
         )
-        
+
         return session
+
     
     async def invalidate_session(self, session_id: str):
         """Invalidate specific session"""
@@ -277,17 +285,7 @@ class AuthService:
         user_data: UserCreate,
         request = None
     ) -> Optional[UserResponse]:
-        self.redis = redis_client
-        self.session_manager = SessionManager(redis_client)
-        self.fingerprinter = DeviceFingerprinter()
-        self.brute_force = BruteForceProtector(redis_client)
-        self.rate_limiter = RateLimitManager(redis_client)
-    
-    async def register_user(
-        self,
-        user_data: UserCreate,
-        request = None
-    ) -> Optional[UserResponse]:
+
         """Register new user with validation"""
         
         # Check if user exists
@@ -446,7 +444,8 @@ class AuthService:
         await self.db.commit()
         
         # Create tokens
-        tokens = await self._create_tokens(user.id, session_id, fingerprint)
+        tokens = await self._create_tokens(user, session_id, fingerprint)
+
         
         # Audit log
         await audit_service.log(
@@ -469,38 +468,34 @@ class AuthService:
     
     async def _create_tokens(
         self,
-        user_id: UUID,
+        user: User,
         session_id: str,
         fingerprint: str
     ) -> Dict[str, str]:
         """Create JWT tokens with binding"""
-        
-        # Get user to include role in token
-        query = select(User).where(User.id == user_id)
-        result = await self.db.execute(query)
-        user = result.scalar_one()
+
         
         # Create access token with additional claims
         access_token = create_access_token({
-            "sub": str(user_id),
+            "sub": str(user.id),
             "session_id": session_id,
             "fingerprint": fingerprint,
             "role": user.role.value,  # Include role in token
             "type": "access"
         })
-        
+
         # Create refresh token
         refresh_token = create_refresh_token({
-            "sub": str(user_id),
+            "sub": str(user.id),
             "session_id": session_id,
             "fingerprint": fingerprint,
             "role": user.role.value,
             "type": "refresh"
         })
-        
+
         # Store refresh token in Redis with binding
         await self.redis.setex(
-            f"refresh_token:{user_id}:{session_id}",
+            f"refresh_token:{user.id}:{session_id}",
             settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
             json.dumps({
                 "token": refresh_token,
@@ -508,19 +503,22 @@ class AuthService:
                 "created_at": datetime.utcnow().isoformat()
             })
         )
+
         
         return {
             "access_token": access_token,
             "refresh_token": refresh_token,
-            "token_type": "bearer"
+            "token_type": "bearer",
+            "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         }
+
     
     async def refresh_tokens(
         self,
         refresh_token: str,
         request,
-        current_session_id: str
     ) -> Optional[Dict]:
+
         """Refresh tokens with validation"""
         
         # Decode refresh token
@@ -540,36 +538,69 @@ class AuthService:
         session = await self.session_manager.validate_session(
             session_id,
             fingerprint,
-            ip_address
+            ip_address,
+            strict_fingerprint=False,
         )
+
 
         if not session:
             return None
         
         # Verify refresh token in Redis
-        stored = await self.redis.get(f"refresh_token:{user_id}:{session_id}")
+        old_key = f"refresh_token:{user_id}:{session_id}"
+        stored = await self.redis.get(old_key)
         if not stored:
             return None
-        
+
         # Generate new tokens
+
         if request:
             new_fingerprint = self.fingerprinter.generate_fingerprint(request)
         else:
             # Fallback when refresh is called without request context
             new_fingerprint = fingerprint or str(user_id)
 
-        return await self._create_tokens(UUID(user_id), session_id, new_fingerprint)
+        # Get user to include role in token
+        query = select(User).where(User.id == UUID(user_id))
+        result = await self.db.execute(query)
+        user = result.scalar_one_or_none()
+        if not user:
+            return None
+
+        # Atomic refresh-token rotation: delete the old binding before writing the new one
+        await self.redis.delete(old_key)
+        return await self._create_tokens(user, session_id, new_fingerprint)
+
+
     
-    async def logout(self, user_id: UUID, session_id: str):
-        """Logout user from specific session"""
-        
+    async def logout(self, access_token: str) -> bool:
+        """Logout by revoking refresh binding + invalidating the session.
+
+        Access token is blacklisted so future uses are blocked.
+        """
+        from app.core.security import TokenBlacklist, decode_token
+
+        payload = decode_token(access_token) or {}
+        user_id = payload.get("sub")
+        session_id = payload.get("session_id")
+
+        # Blacklist access token
+        blacklist = TokenBlacklist(self.redis)
+        await blacklist.blacklist_token(
+            access_token,
+            expires_in=60 * settings.ACCESS_TOKEN_EXPIRE_MINUTES,
+        )
+
+        if not user_id or not session_id:
+            return True
+
         # Invalidate session
         await self.session_manager.invalidate_session(session_id)
-        
+
         # Remove refresh token
         await self.redis.delete(f"refresh_token:{user_id}:{session_id}")
-        
-        # Blacklist access token (optional - would need token storage)
+        return True
+
         
     async def resend_verification_email(self, user_email: str, request=None) -> bool:
         """Regenerate email verification token and re-send the verification email."""

@@ -80,11 +80,28 @@ async def paypal_create_order(
     await db.refresh(payment)
 
     paypal = PayPalService()
-    paypal_res = await paypal.create_order(
-        total_amount=str(order.total),
-        currency="USD",
-        intent="CAPTURE",
-    )
+    try:
+        paypal_res = await paypal.create_order(
+            total_amount=str(order.total),
+            currency="USD",
+            intent="CAPTURE",
+        )
+    except RuntimeError as exc:
+        # Roll back the pending Payment row we already committed
+        await db.delete(payment)
+        await db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(exc),
+        )
+    except Exception as exc:
+        await db.delete(payment)
+        await db.commit()
+        logger.error("PayPal create_order failed: %s", exc, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="PayPal request failed",
+        )
 
     # Store PayPal order id as provider_transaction_id for traceability until capture
     payment.provider_transaction_id = paypal_res.get("paypal_order_id")
@@ -101,6 +118,7 @@ async def paypal_create_order(
     await db.commit()
 
     return PayPalCreateOrderResponse(
+
         approval_url=paypal_res["approval_url"],
         paypal_order_id=paypal_res["paypal_order_id"],
     )
@@ -144,10 +162,23 @@ async def paypal_capture(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="PayPal payment record not found")
 
     paypal = PayPalService()
-    capture_res = await paypal.capture_order(payload.paypal_order_id)
+    try:
+        capture_res = await paypal.capture_order(payload.paypal_order_id)
+    except RuntimeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(exc),
+        )
+    except Exception as exc:
+        logger.error("PayPal capture_order failed: %s", exc, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="PayPal capture failed",
+        )
 
     if capture_res.get("capture_status") != "COMPLETED":
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="PayPal capture not completed")
+
 
     capture_id = capture_res.get("capture_id")
 
