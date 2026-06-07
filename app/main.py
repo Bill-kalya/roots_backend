@@ -28,6 +28,8 @@ from app.api.routes import auth, newsletter, testimonials, products as public_pr
 from app.api.routes.merchant.public import router as merchant_public_router
 from app.api.routes.chat import router as chat_router
 from app.api.routes.conversations import router as conversations_router
+from app.api.routes.geo import router as geo_router
+
 
 from app.api.routes import mpesa
 from app.api.routes.payments_paypal import router as paypal_routes
@@ -326,6 +328,8 @@ app.include_router(newsletter.router, prefix="/api/newsletter", tags=["Newslette
 app.include_router(testimonials.router, prefix="/api/testimonials", tags=["Testimonials"])
 app.include_router(public_products.router, prefix="/api/products", tags=["Public Products"])
 app.include_router(merchant_public_router, prefix="/api/merchants", tags=["Public Merchants"])
+app.include_router(geo_router, prefix="/api/v1", tags=["Geo"])
+
 
 # ============ M-PESA (Public) ============
 app.include_router(mpesa.router, prefix="/api/payments/mpesa", tags=["M-Pesa"])

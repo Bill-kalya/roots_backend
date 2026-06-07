@@ -4,10 +4,28 @@ import uuid
 from app.db.base import Base, TimestampMixin
 
 
+from sqlalchemy import ForeignKey
+from sqlalchemy.orm import relationship
+
+
 class Product(Base, TimestampMixin):
     __tablename__ = "products"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+
+    merchant_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    merchant = relationship(
+        "User",
+        foreign_keys=[merchant_id],
+        back_populates="products",
+        lazy="select",
+    )
+
     name = Column(String(255), nullable=False)
     description = Column(Text, nullable=False)
     long_description = Column(Text, nullable=True)

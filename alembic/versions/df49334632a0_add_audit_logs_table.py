@@ -17,7 +17,11 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Create audit_logs table
+    conn = op.get_bind()
+    inspector = sa.inspect(conn)
+    existing_indexes = [i["name"] for i in inspector.get_indexes("audit_logs")] 
+
+    # Create audit_logs table (idempotent)
     op.create_table(
         "audit_logs",
         sa.Column("id", sa.dialects.postgresql.UUID(as_uuid=True), primary_key=True),
@@ -31,11 +35,18 @@ def upgrade() -> None:
         sa.Column("status", sa.String(length=20), nullable=False),
         sa.Column("error_message", sa.String(length=1000), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=False),
+        if_not_exists=True,
     )
 
-    op.create_index("idx_audit_user_action", "audit_logs", ["user_id", "action"])
-    op.create_index("idx_audit_created_at", "audit_logs", ["created_at"])
-    op.create_index("idx_audit_resource", "audit_logs", ["resource", "resource_id"])
+    # Guard each index creation (idempotent)
+    if "idx_audit_user_action" not in existing_indexes:
+        op.create_index("idx_audit_user_action", "audit_logs", ["user_id", "action"])
+
+    if "idx_audit_created_at" not in existing_indexes:
+        op.create_index("idx_audit_created_at", "audit_logs", ["created_at"])
+
+    if "idx_audit_resource" not in existing_indexes:
+        op.create_index("idx_audit_resource", "audit_logs", ["resource", "resource_id"])
 
 
 

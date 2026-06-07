@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, or_
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload
 from typing import Optional, Tuple, List
 from app.models.product import Product
 from app.schemas.product import ProductListResponse, ProductResponse
@@ -70,12 +70,17 @@ class ProductService:
     
     async def get_product_by_id(self, product_id) -> Optional[Product]:
         """Get single product by ID"""
-        query = select(Product).where(
-            Product.id == product_id,
-            Product.is_active == True
+        query = (
+            select(Product)
+            .options(joinedload(Product.merchant))
+            .where(
+                Product.id == product_id,
+                Product.is_active == True
+            )
         )
         result = await self.db.execute(query)
         return result.scalar_one_or_none()
+
     
     async def get_products_by_tag(self, tag: str, limit: int = 20) -> List[Product]:
         """Get products by tag for cache warming"""

@@ -10,10 +10,14 @@ class UserRole(PyEnum):
     MERCHANT = "MERCHANT"
     ADMIN = "ADMIN"
 
+from sqlalchemy.orm import relationship
+
+
 class User(Base, TimestampMixin):
     __tablename__ = "users"
     
     # Primary fields
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email = Column(String(255), unique=True, nullable=False, index=True)
     hashed_password = Column(String(255), nullable=False)
@@ -183,3 +187,6 @@ class User(Base, TimestampMixin):
         if not self.trusted_devices:
             return False
         return any(d["fingerprint"] == device_fingerprint for d in self.trusted_devices)
+
+    products = relationship("Product", back_populates="merchant", lazy="select")
+

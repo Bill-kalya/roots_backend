@@ -3,6 +3,15 @@ from uuid import UUID
 from decimal import Decimal
 from datetime import datetime
 from typing import Optional
+import uuid
+
+
+
+class MerchantInfo(BaseModel):
+    id: uuid.UUID
+    full_name: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)
+
 
 
 class ProductBase(BaseModel):
@@ -58,6 +67,10 @@ class ProductResponse(ProductBase):
     is_active: bool
     created_at: datetime
     updated_at: datetime
+
+    merchant_id: Optional[uuid.UUID] = None
+    merchant: Optional[MerchantInfo] = None
+
 
 
 class ProductListResponse(BaseModel):

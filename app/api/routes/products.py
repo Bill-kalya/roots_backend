@@ -154,6 +154,8 @@ async def get_product(
     
     service = ProductService(db)
     product = await service.get_product_by_id(product_uuid)
+
+
     
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
@@ -164,3 +166,4 @@ async def get_product(
     await redis.setex(cache_key, 3600, json.dumps(response.model_dump(), default=str))
     
     return response
+
