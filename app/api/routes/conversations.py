@@ -27,6 +27,42 @@ class ResolveRoomRequest(BaseModel):
     merchant_id: UUID
 
 
+def _parse_room_id(room_id: str) -> tuple[UUID | None, UUID | None]:
+    """Split '<customer_uuid>__<merchant_uuid>' → (customer_id, merchant_id)."""
+    if "__" not in room_id:
+        return None, None
+    left, right = room_id.split("__", 1)
+    try:
+        return UUID(left), UUID(right)
+    except ValueError:
+        return None, None
+
+
+def _derive_room_key(room_id: str) -> str:
+    """Deterministically derive a 256-bit AES key for a chat room.
+
+    Algorithm: HMAC-SHA256(key=CHAT_ENCRYPTION_SECRET, msg=room_id)
+    Output: 64-char lowercase hex string (32 bytes) suitable for AES-256.
+    """
+    import hashlib
+    import hmac
+
+    from app.core.config import settings
+
+    secret: str = settings.CHAT_ENCRYPTION_SECRET
+    if not secret:
+        raise RuntimeError(
+            "CHAT_ENCRYPTION_SECRET is not set. "
+            "Add it to environment variables before enabling encrypted chat."
+        )
+
+    return hmac.new(
+        secret.encode("utf-8"),
+        room_id.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+
+
 @router.post("/conversations/resolve-room")
 async def resolve_room(
     body: ResolveRoomRequest,
@@ -51,4 +87,37 @@ async def resolve_room(
         "customer_id": str(current_user.id),
         "merchant_id": str(merchant_id),
     }
+
+
+@router.get("/conversations/room-key")
+async def get_room_key(
+    room_id: str,
+    current_user: User = Depends(get_current_user),
+):
+    """Return deterministic AES-256 key for a specific chat room."""
+
+    customer_uuid, merchant_uuid = _parse_room_id(room_id)
+    if not customer_uuid or not merchant_uuid:
+        raise HTTPException(status_code=400, detail="Invalid room_id format")
+
+    # Authorization: caller must be a participant
+    if current_user.id != customer_uuid and current_user.id != merchant_uuid:
+        raise HTTPException(
+            status_code=403,
+            detail="You are not a participant of this conversation",
+        )
+
+    try:
+        key_hex = _derive_room_key(room_id)
+    except RuntimeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Encryption service is not configured",
+        )
+
+    return {
+        "key": key_hex,
+        "room_id": room_id,
+    }
+
 

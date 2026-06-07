@@ -8,7 +8,6 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
 
 from app.cache.redis_manager import redis_manager
 from app.core.dependencies import get_current_user
@@ -138,9 +137,9 @@ async def chat_ws(
         conv_stmt = (
             select(Conversation)
             .where(Conversation.room_id == room_id)
-            .options(selectinload(Conversation.customer_id), selectinload(Conversation.merchant_id))
         )
         conv = (await db.execute(conv_stmt)).scalar_one_or_none()
+
 
         merchant_user_stmt = select(User).where(User.id == merchant_id)
         merchant_user = (await db.execute(merchant_user_stmt)).scalar_one_or_none()
@@ -184,9 +183,11 @@ async def chat_ws(
                 "id": str(m.id),
                 "from": "customer" if is_customer else "merchant",
                 "text": m.content,
+                "encrypted": bool(getattr(m, "encrypted", False)),
                 "time": m.created_at.strftime("%H:%M") if getattr(m, "created_at", None) else "",
                 "status": m.status,
             }
+
         )
 
     await websocket.send_json({"type": "history", "messages": history_out})
@@ -194,6 +195,7 @@ async def chat_ws(
     async def _publisher_loop():
         try:
             async for raw in pubsub.listen():
+
                 if raw.get("type") != "message":
                     continue
                 data = raw.get("data")
@@ -225,9 +227,11 @@ async def chat_ws(
                     "id": message_id,
                     "from": "customer" if sender_id == str(customer_id) else "merchant",
                     "text": content,
+                    "encrypted": bool(msg.get("encrypted", False)),
                     "time": time_str,
                     "status": status,
                 }
+
                 await websocket.send_json(out)
         except WebSocketDisconnect:
             return
@@ -248,7 +252,9 @@ async def chat_ws(
                 if not content:
                     continue
 
+                is_encrypted = bool(data.get("encrypted", False))
                 sender_id = user.id
+
 
                 # Ensure conversation exists; create if missing
                 async with get_db() as db:
@@ -269,8 +275,10 @@ async def chat_ws(
                         conversation_id=conv.id,
                         sender_id=sender_id,
                         content=content,
+                        encrypted=is_encrypted,
                         status="delivered",
                     )
+
                     db.add(msg)
                     await db.commit()
                     await db.refresh(msg)
@@ -283,11 +291,13 @@ async def chat_ws(
                         "conversation_id": str(msg.conversation_id),
                         "sender_id": str(msg.sender_id),
                         "content": msg.content,
+                        "encrypted": is_encrypted,
                         "status": msg.status,
                         "created_at": msg.created_at.isoformat() if msg.created_at else None,
                     },
                 }
                 await redis.publish(channel, json.dumps(publish_payload))
+
 
             else:
                 # typing/read/etc: ignore for now

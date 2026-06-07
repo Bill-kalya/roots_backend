@@ -285,12 +285,19 @@ class Settings(BaseSettings):
         """
         return self
 
+    # =========================================================================
+    # ENCRYPTED CHAT (deterministic room key)
+    # =========================================================================
+    # Empty string disables encryption (endpoint returns 500 and frontend degrades to plaintext).
+    CHAT_ENCRYPTION_SECRET: str = ""
+
     model_config = ConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=True,
         extra="ignore",         # was "allow" — silently swallowing typos; now
     )                           # ignored so unknown keys don't pollute settings
+
 
 
 

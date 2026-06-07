@@ -17,7 +17,11 @@ async def get_geo(request: Request):
         return {"country_code": None}
 
     async with httpx.AsyncClient() as client:
-        resp = await client.get(f"https://ipapi.co/{ip}/json/", timeout=5)
-        resp.raise_for_status()
-        return resp.json()
+        try:
+            resp = await client.get(f"https://ipapi.co/{ip}/json/", timeout=5)
+            resp.raise_for_status()
+            return resp.json()
+        except Exception:
+            # Fail soft if external IP geolocation is unreachable.
+            return {"country_code": None, "ip": ip}
 

@@ -1,8 +1,9 @@
 import enum
 import uuid
-from sqlalchemy import Column, ForeignKey, Enum, String, Text, Index
+from sqlalchemy import Column, ForeignKey, Enum, String, Text, Index, Boolean
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import relationship
+
 
 from app.db.base import Base, TimestampMixin
 
@@ -27,10 +28,13 @@ class Message(Base, TimestampMixin):
 
     sender_id = Column(PG_UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
 
-    # store plain text for now (can extend to attachments later)
+    # store plain text or ciphertext depending on encryption state
     content = Column(Text, nullable=False)
 
+    encrypted = Column(Boolean, nullable=False, default=False, server_default="false")
+
     status = Column(String(20), default=MessageStatus.DELIVERED.value, nullable=False)
+
 
     __table_args__ = (
         Index("ix_messages_conversation_created_at", "conversation_id", "created_at"),

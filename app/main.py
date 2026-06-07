@@ -328,7 +328,7 @@ app.include_router(newsletter.router, prefix="/api/newsletter", tags=["Newslette
 app.include_router(testimonials.router, prefix="/api/testimonials", tags=["Testimonials"])
 app.include_router(public_products.router, prefix="/api/products", tags=["Public Products"])
 app.include_router(merchant_public_router, prefix="/api/merchants", tags=["Public Merchants"])
-app.include_router(geo_router, prefix="/api/v1", tags=["Geo"])
+app.include_router(geo_router, prefix="/api", tags=["Geo"])
 
 
 # ============ M-PESA (Public) ============
