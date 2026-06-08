@@ -14,7 +14,7 @@ except ModuleNotFoundError:  # pragma: no cover
 
 
 from app.db.session import get_db
-from app.core.dependencies import get_current_active_user
+from app.core.dependencies import get_current_active_user, get_redis
 from app.models.user import User
 from app.models.order import Order, OrderStatus
 from app.models.payment import Payment, PaymentStatus
@@ -92,7 +92,11 @@ async def create_payment_intent(
 
 
 @router.post("/webhook")
-async def stripe_webhook(request: Request, db: AsyncSession = Depends(get_db)):
+async def stripe_webhook(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    redis: aioredis.Redis = Depends(get_redis),
+):
     # Important: Stripe requires the raw body bytes
     payload = await request.body()
     sig_header = request.headers.get("stripe-signature")
@@ -130,7 +134,7 @@ async def stripe_webhook(request: Request, db: AsyncSession = Depends(get_db)):
             existing_payment = res.scalar_one_or_none()
 
         # Confirm internal payment (OrderService will check order status)
-        order_service = OrderService(db, redis_client= None)
+        order_service = OrderService(db, redis_client=redis)
         try:
             await order_service.confirm_payment(UUID(order_id), payment_intent.get("id"))
         except Exception as e:
