@@ -9,7 +9,7 @@ Create Date: 2026-06-09
 from alembic import op
 
 
-revision = 'cc02_add_order_items_product_foreign_key'
+revision = 'cc02'
 down_revision = '4e8c88804689'
 branch_labels = None
 depends_on = None

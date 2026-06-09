@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '16f74fa27da4'
-down_revision = 'cc01_create_orders_table'
+down_revision = 'cc01'
 # NOTE: audit logs migrate is part of the orders/payments chain
 branch_labels = None
 depends_on = None

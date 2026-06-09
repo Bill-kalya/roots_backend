@@ -1,6 +1,6 @@
 """create orders and order_items tables
 
-Revision ID: cc01_create_orders_table
+Revision ID: cc01
 Revises: 831669f74097
 Create Date: 2026-06-06
 
@@ -9,7 +9,8 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import UUID
 
-revision = 'cc01_create_orders_table'
+revision = 'cc01'
+
 down_revision = '831669f74097'
 branch_labels = None
 depends_on = None
