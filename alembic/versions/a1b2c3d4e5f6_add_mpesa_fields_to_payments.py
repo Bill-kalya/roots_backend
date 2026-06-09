@@ -26,6 +26,9 @@ def upgrade() -> None:
         END $$
     """)
 
+    # Create the table if it doesn't exist, but also repair older schemas.
+    # Railway may run this migration when `payments` exists but without the
+    # new mpesa columns, which would cause index creation to fail.
     op.execute("""
         CREATE TABLE IF NOT EXISTS payments (
             id                      UUID          PRIMARY KEY,
@@ -45,6 +48,13 @@ def upgrade() -> None:
         )
     """)
 
+    # Repair/extend schema regardless of whether the table was newly created.
+    op.execute("""ALTER TABLE payments ADD COLUMN IF NOT EXISTS checkout_request_id VARCHAR(255)""")
+    op.execute("""ALTER TABLE payments ADD COLUMN IF NOT EXISTS phone VARCHAR(20)""")
+    op.execute("""ALTER TABLE payments ADD COLUMN IF NOT EXISTS mpesa_receipt VARCHAR(100)""")
+    op.execute("""ALTER TABLE payments ADD COLUMN IF NOT EXISTS result_code VARCHAR(10)""")
+    op.execute("""ALTER TABLE payments ADD COLUMN IF NOT EXISTS raw_payload TEXT""")
+
     op.execute("""
         CREATE INDEX IF NOT EXISTS ix_payments_order_id
             ON payments (order_id)
@@ -59,6 +69,7 @@ def upgrade() -> None:
         CREATE UNIQUE INDEX IF NOT EXISTS ix_payments_checkout_request_id
             ON payments (checkout_request_id)
     """)
+
 
 
 def downgrade() -> None:
