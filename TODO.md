@@ -1,7 +1,19 @@
-## Migration fix: duplicate payment columns
+# TODO - CORS + Production fixes
 
-- [ ] Update migration 13b29a22f72c to be idempotent for payment columns (skip if column exists)
-- [ ] Remove duplicate add_column calls from migration 62c1dea2e853 (upgrade only)
-- [ ] Make 62c1dea2e853 downgrade safe/non-destructive (remove audit_logs create and column drops)
-- [ ] Run Alembic checks locally: alembic heads, alembic upgrade head, alembic current
-- [ ] Commit and push
+## Plan (approved by repository inspection)
+
+### 1) Fix CORS for Vercel deployments
+- Code change: updated `app/main.py` to include `allow_origin_regex=r"https://.*\.vercel\.app"` in `CORSMiddleware`.
+- Deployment: still set exact `CORS_ORIGINS` in Railway to include your primary domains (helps keep policy explicit).
+  - `CORS_ORIGINS=["https://roots-black.vercel.app","https://roots-gold.vercel.app"]`
+
+
+
+### 2) Fix the failing CORS preflight /api/auth/login OPTIONS 400
+- Confirm `enterprise_middleware` does not block OPTIONS (it currently early-returns `call_next`).
+- If it still fails after CORS env update, inspect the auth login route and any custom endpoint-level OPTIONS handlers.
+
+### 3) Fix testimonials UndefinedTableError
+- Run Alembic migrations that create `testimonials` table.
+- If unable to migrate immediately: temporarily disable the testimonials endpoint/router to prevent DB query.
+

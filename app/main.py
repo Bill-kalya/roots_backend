@@ -206,6 +206,8 @@ app.add_middleware(RequestIDMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
+    # Allow Vercel preview deployments in addition to explicit origins.
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=settings.CORS_METHODS,
     allow_headers=settings.CORS_HEADERS,
