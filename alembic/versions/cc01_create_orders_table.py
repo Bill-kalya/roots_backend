@@ -48,8 +48,8 @@ def upgrade() -> None:
         sa.Column('created_at', sa.DateTime(), server_default=sa.func.now(), nullable=False),
         sa.Column('updated_at', sa.DateTime(), server_default=sa.func.now(), nullable=False),
         sa.ForeignKeyConstraint(['order_id'], ['orders.id'], name='fk_order_items_order_id_orders'),
-        sa.ForeignKeyConstraint(['product_id'], ['products.id'], name='fk_order_items_product_id_products'),
     )
+
 
 
 def downgrade() -> None:
