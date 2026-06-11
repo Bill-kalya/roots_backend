@@ -1,0 +1,9 @@
+# Nixpacks configuration
+
+[phases.setup]
+# Ensure the correct Python version is used.
+python_version = "3.12.10"
+
+[phases.start]
+cmd = "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+

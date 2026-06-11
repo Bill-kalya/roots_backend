@@ -1,0 +1,11 @@
+# Railway configuration file
+# Docs: https://docs.railway.app/reference/railway-toml
+
+[build]
+# Railway will install dependencies using requirements.txt for Python projects.
+# No explicit builder needed.
+
+[deploy]
+# Use Railway's injected PORT.
+startCommand = "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+
