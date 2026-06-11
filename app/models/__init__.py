@@ -5,6 +5,7 @@ from app.models.testimonial import Testimonial
 from app.models.newsletter import NewsletterSubscriber
 from app.models.conversation import Conversation
 from app.models.message import Message
+from app.models.receipt import Receipt
 
 
 # Import all models so Base.metadata knows about them
@@ -13,9 +14,11 @@ __all__ = [
     "Product",
     "Order",
     "OrderItem",
+    "Receipt",
     "Testimonial",
     "NewsletterSubscriber",
     "Conversation",
     "Message",
 ]
+
 

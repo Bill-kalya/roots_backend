@@ -152,8 +152,19 @@ class InventoryReservation:
     
     async def _decrement_stock_in_db(self, product_id: str, quantity: int):
         """Decrement stock in database"""
-        # Implementation would update PostgreSQL
-        pass
+        # Ensure product exists and stock is decremented atomically at DB level.
+        # Guard against negative inventory.
+        await self.db.execute(
+            update(Product)
+            .where(
+                Product.id == UUID(product_id),
+                Product.stock >= quantity,
+            )
+            .values(stock=Product.stock - quantity)
+        )
+        await self.db.commit()
+
+
 
 class OrderService:
     """Enterprise order service with idempotency, distributed transactions, and inventory management"""
@@ -266,7 +277,19 @@ class OrderService:
         order = await self.get_order_by_id(order_id)
         if not order:
             raise ValueError("Order not found")
-        
+
+        # Idempotency / duplicate callback safety:
+        # If we've already marked the order as paid, do NOT commit inventory again.
+        if order.status == OrderStatus.PAID:
+            # Still allow updating payment_reference/paid_at if they are missing.
+            if not order.payment_reference:
+                order.payment_reference = payment_intent_id
+            if not order.paid_at:
+                order.paid_at = datetime.utcnow()
+            await self.db.commit()
+            await self.db.refresh(order)
+            return order
+
         if order.status != OrderStatus.PENDING:
             raise ValueError(f"Order cannot be paid. Current status: {order.status}")
         
@@ -282,6 +305,7 @@ class OrderService:
         
         await self.db.commit()
         await self.db.refresh(order)
+        
         
         # Cancel timeout job
         await self._cancel_order_timeout(order_id)

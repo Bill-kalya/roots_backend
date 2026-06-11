@@ -124,12 +124,22 @@ class Settings(BaseSettings):
     PUBLIC_API_BASE_URL: str = "http://localhost:8000"
 
     # =========================================================================
+    # RECEIPTS (Anti-counterfeit / signed verification)
+    # =========================================================================
+    # Long random string generated once.
+    # Example: python -c "import secrets; print(secrets.token_hex(32))"
+    RECEIPT_SECRET: str = ""
+
+
+
+    # =========================================================================
 
     # EMAIL (Resend)
     # =========================================================================
     RESEND_API_KEY: str = ""
     # If empty, we fall back to EMAIL_FROM
     RESEND_FROM_EMAIL: str = ""
+
     RESEND_VERIFY_EMAIL_FROM_NAME: str = "Roots"
 
     # =========================================================================

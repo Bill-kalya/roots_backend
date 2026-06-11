@@ -68,26 +68,26 @@ async def mfa_verify_enroll(
 
 
 
-@router.post("/register", response_model=UserResponse)
+@router.post("/register")
 async def register(
     user_data: UserCreate,
     db: AsyncSession = Depends(get_db),
     redis: aioredis.Redis = Depends(get_redis),
 ):
-    """Register new user (sends verification email)."""
+    """Register new user and require email verification before activation."""
     service = AuthService(db, redis)
     try:
-        user = await service.register_user(user_data)
+        await service.register_user(user_data)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User with this email already exists",
-        )
-
-    return user
+    # SECURITY: do not return a fully populated UserResponse during registration.
+    # User is created as is_active=False and is_verified=False; frontend must verify email.
+    return {
+        "success": True,
+        "requires_email_verification": True,
+        "message": "Check your email to verify your account.",
+    }
 
 
 @router.get("/verify-email")

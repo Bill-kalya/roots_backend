@@ -1,19 +1,11 @@
-# TODO - CORS + Production fixes
+# TODO
 
-## Plan (approved by repository inspection)
-
-### 1) Fix CORS for Vercel deployments
-- Code change: updated `app/main.py` to include `allow_origin_regex=r"https://.*\.vercel\.app"` in `CORSMiddleware`.
-- Deployment: still set exact `CORS_ORIGINS` in Railway to include your primary domains (helps keep policy explicit).
-  - `CORS_ORIGINS=["https://roots-black.vercel.app","https://roots-gold.vercel.app"]`
-
-
-
-### 2) Fix the failing CORS preflight /api/auth/login OPTIONS 400
-- Confirm `enterprise_middleware` does not block OPTIONS (it currently early-returns `call_next`).
-- If it still fails after CORS env update, inspect the auth login route and any custom endpoint-level OPTIONS handlers.
-
-### 3) Fix testimonials UndefinedTableError
-- Run Alembic migrations that create `testimonials` table.
-- If unable to migrate immediately: temporarily disable the testimonials endpoint/router to prevent DB query.
+- [x] Update `app/api/routes/auth.py` so `/register` does NOT return a full `UserResponse` as a “completed registration”. Instead returns `{ success: true, requires_email_verification: true }`.
+- [ ] (Optional hardening) Update `app/core/dependencies.py` `get_current_user` to also require `User.is_verified == True` (not just `is_active == True`).
+- [ ] Add/verify tests or manual steps:
+  - [ ] Register with new email
+  - [ ] Confirm login returns 401 / “Please verify your email before logging in”
+  - [ ] Confirm protected endpoints return 401 until verified
+  - [ ] Verify email via `/verify-email?token=...`
+  - [ ] Confirm login and protected endpoints work after verification
 

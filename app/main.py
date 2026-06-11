@@ -38,6 +38,8 @@ from app.api.routes.payments_paypal import router as paypal_routes
 from app.api.routes.orders import router as order_router
 from app.api.routes.payments_stripe import router as stripe_routes
 from app.api.routes.shipping import router as shipping_router
+from app.api.routes.receipts import router as receipts_router
+
 
 
 
@@ -353,11 +355,19 @@ app.include_router(order_router, prefix="/api/orders", tags=["Orders"])
 # ============ Shipping (Rates) ============
 app.include_router(shipping_router, prefix="/api/shipping", tags=["Shipping"])
 
+# ============ Receipts (Receipt generation/verification) ============
+app.include_router(receipts_router)
+
+
+
+
+
 
 
 
 
 # ============ USER ROUTES (Authenticated Users) ============
+
 app.include_router(cart.router, prefix="/api/cart", tags=["Cart"])
 app.include_router(user_products.router, prefix="/api/user/products", tags=["User - Products"])
 app.include_router(user_profile.router, prefix="/api/user/profile", tags=["User - Profile"])

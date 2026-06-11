@@ -45,14 +45,29 @@ async def stk_push(payload: Dict[str, Any], db: AsyncSession = Depends(get_db)):
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
 
-    order_reference = (
-        str(payload.get("order_reference")).strip()
-        if payload.get("order_reference")
-        else f"ROOTS-{phone[-4:]}"
+    order_id_raw = payload.get("order_id")
+    if not order_id_raw:
+        raise HTTPException(status_code=422, detail="order_id is required")
+
+    from app.models.order import Order
+    order_id_raw = str(order_id_raw).strip()
+    if not order_id_raw:
+        raise HTTPException(status_code=422, detail="order_id is required")
+
+    order = await db.execute(
+        select(Order).where(Order.id == order_id_raw)
     )
+    order_obj = order.scalar_one_or_none()
+    if not order_obj:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    order_reference = f"ORDER-{order_obj.id}"
+
+
 
     try:
         response = await MpesaService().stk_push(
+
             phone=phone,
             amount=str(amount),
             order_reference=order_reference,
@@ -69,6 +84,7 @@ async def stk_push(payload: Dict[str, Any], db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=502, detail="No CheckoutRequestID returned.")
 
     payment = Payment(
+        order_id=order_obj.id,
         provider="mpesa",
         status="pending",
         amount=str(amount),
@@ -78,6 +94,7 @@ async def stk_push(payload: Dict[str, Any], db: AsyncSession = Depends(get_db)):
         provider_transaction_id=merchant_request_id or None,
         raw_payload=None,
     )
+
     db.add(payment)
     await db.commit()
     await db.refresh(payment)
@@ -122,12 +139,42 @@ async def mpesa_callback(request: Request, db: AsyncSession = Depends(get_db)):
 
     if result_code == "0":
         payment.status = "completed"
-        receipt = next((i.get("Value") for i in items if i.get("Name") == "MpesaReceiptNumber"), None)
+        receipt = next(
+            (
+                i.get("Value")
+                for i in items
+                if i.get("Name") == "MpesaReceiptNumber"
+            ),
+            None,
+        )
         payment.mpesa_receipt = str(receipt) if receipt else None
-        logger.info("Payment completed checkout_request_id=%s receipt=%s", checkout_request_id, payment.mpesa_receipt)
+        logger.info(
+            "Payment completed checkout_request_id=%s receipt=%s",
+            checkout_request_id,
+            payment.mpesa_receipt,
+        )
+
+        if payment.order_id:
+            from app.services.order_service import OrderService
+
+            redis = request.app.state.redis
+            order_service = OrderService(db=db, redis_client=redis)
+            try:
+                await order_service.confirm_payment(
+                    payment.order_id,
+                    payment.mpesa_receipt,
+                )
+            except ValueError:
+                pass
     else:
         payment.status = "failed"
-        logger.warning("Payment failed checkout_request_id=%s code=%s desc=%s", checkout_request_id, result_code, result_desc)
+        logger.warning(
+            "Payment failed checkout_request_id=%s code=%s desc=%s",
+            checkout_request_id,
+            result_code,
+            result_desc,
+        )
+
 
     try:
         payment.raw_payload = json.dumps(payload)[:5000]
