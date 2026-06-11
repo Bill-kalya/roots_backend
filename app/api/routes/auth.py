@@ -171,7 +171,7 @@ async def login(
     service = AuthService(db, redis)
 
     # authenticate_user returns either:
-    # - {"requires_mfa": True, "user_id": "..."}
+    # - {"requires_mfa": True, "challenge_id": "..."}
     # - {"user": ..., "tokens": ..., "session_id": ..., "role": ..., "requires_mfa": False}
     try:
         result = await service.authenticate_user(
@@ -179,6 +179,7 @@ async def login(
             credentials.password,
             request=request,
             mfa_code=None,
+            mfa_challenge_id=None,
         )
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
@@ -190,7 +191,9 @@ async def login(
         # Step 1 response: no JWT issued yet.
         return MFALoginStep1Response(**result)
 
+
     return result.get("tokens")
+
 
 
 @router.post("/login/verify-mfa")
@@ -210,6 +213,7 @@ async def verify_mfa_login(
             credentials.password,
             request=request,
             mfa_code=credentials.mfa_code,
+            mfa_challenge_id=credentials.challenge_id,
         )
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))

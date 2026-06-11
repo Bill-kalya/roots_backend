@@ -72,11 +72,14 @@ class MFALoginStep2Request(BaseModel):
     email: EmailStr
     password: str
     mfa_code: str
+    challenge_id: str
 
 
 class MFALoginStep1Response(BaseModel):
     requires_mfa: bool
+    challenge_id: Optional[str] = None
     user_id: Optional[UUID] = None
+
 
 
 class MFASetupResponse(BaseModel):

@@ -210,8 +210,15 @@ class AuthService:
     def __init__(self, db: AsyncSession, redis_client):
         self.db = db
         self.redis = redis_client
+
         self.session_manager = SessionManager(redis_client)
         self.fingerprinter = DeviceFingerprinter()
+        self.brute_force = BruteForceProtector(redis_client)
+        self.rate_limiter = RateLimitManager(redis_client)
+
+    def _mfa_challenge_key(self, challenge_id: str) -> str:
+        return f"mfa_login_challenge:{challenge_id}"
+
         self.brute_force = BruteForceProtector(redis_client)
         self.rate_limiter = RateLimitManager(redis_client)
 
@@ -363,9 +370,14 @@ class AuthService:
         email: str,
         password: str,
         request,
-        mfa_code: str = None
+        mfa_code: str = None,
+        mfa_challenge_id: str | None = None,
     ) -> Optional[Dict]:
-        """Authenticate user with MFA and brute force protection"""
+        """Authenticate user with MFA and brute force protection.
+
+        Implements step-up MFA with a Redis-backed challenge id.
+        """
+
         
         if request is None:
             raise ValueError("Request context is required for login")
@@ -406,22 +418,112 @@ class AuthService:
 
             raise ValueError(f"Account locked until {user.account_locked_until}")
         
-        # Check MFA if enabled
+        # Check MFA if enabled (step-up via Redis challenge id)
         if user.mfa_enabled:
             if not mfa_code:
-                return {"requires_mfa": True, "user_id": str(user.id)}
-            
+                # Step 1: create an MFA challenge
+                challenge_id = str(uuid4())
+                challenge_data = {
+                    "user_id": str(user.id),
+                    "email": user.email,
+                    "fingerprint": fingerprint,
+                    "created_at": datetime.utcnow().isoformat(),
+                    "verified": False,
+                    "attempts": 0,
+                }
+                # Short TTL for challenge
+                await self.redis.setex(
+                    f"mfa_login_challenge:{challenge_id}",
+                    300,  # 5 minutes
+                    json.dumps(challenge_data),
+                )
+                return {"requires_mfa": True, "challenge_id": challenge_id}
+
+            # Step 2: validate challenge state
+            if not mfa_challenge_id:
+                await audit_service.log(
+                    user_id=str(user.id),
+                    action="mfa_failed",
+                    resource="auth",
+                    resource_id=str(user.id),
+                    details={"reason": "missing_challenge_id"},
+                    request=request,
+                    status="failure",
+                )
+                raise ValueError("MFA challenge required")
+
+            raw = await self.redis.get(f"mfa_login_challenge:{mfa_challenge_id}")
+            if not raw:
+                await audit_service.log(
+                    user_id=str(user.id),
+                    action="mfa_failed",
+                    resource="auth",
+                    resource_id=str(user.id),
+                    details={"reason": "invalid_or_expired_challenge"},
+                    request=request,
+                    status="failure",
+                )
+                raise ValueError("Invalid or expired MFA challenge")
+
+            try:
+                challenge = json.loads(raw)
+            except Exception:
+                await self.redis.delete(f"mfa_login_challenge:{mfa_challenge_id}")
+                raise ValueError("Invalid MFA challenge")
+
+            if challenge.get("user_id") != str(user.id):
+                await audit_service.log(
+                    user_id=str(user.id),
+                    action="mfa_failed",
+                    resource="auth",
+                    resource_id=str(user.id),
+                    details={"reason": "challenge_user_mismatch"},
+                    request=request,
+                    status="failure",
+                )
+                raise ValueError("Invalid MFA challenge")
+
+            if challenge.get("verified"):
+                raise ValueError("MFA challenge already used")
+
+            # Increment attempts and enforce limit
+            challenge["attempts"] = int(challenge.get("attempts", 0)) + 1
+            if challenge["attempts"] > 5:
+                await self.redis.delete(f"mfa_login_challenge:{mfa_challenge_id}")
+                await audit_service.log(
+                    user_id=str(user.id),
+                    action="mfa_failed",
+                    resource="auth",
+                    resource_id=str(user.id),
+                    details={"reason": "too_many_attempts"},
+                    request=request,
+                    status="failure",
+                )
+                raise ValueError("Too many MFA attempts")
+
+            # Store updated attempts
+            ttl = await self.redis.ttl(f"mfa_login_challenge:{mfa_challenge_id}")
+            await self.redis.setex(
+                f"mfa_login_challenge:{mfa_challenge_id}",
+                ttl if ttl and ttl > 0 else 300,
+                json.dumps(challenge),
+            )
+
             if not MFAService.verify_code(user.mfa_secret, mfa_code):
                 await audit_service.log(
                     user_id=str(user.id),
                     action="mfa_failed",
                     resource="auth",
                     resource_id=str(user.id),
-                    details={},
+                    details={"reason": "invalid_mfa_code"},
                     request=request,
-                    status="failure"
+                    status="failure",
                 )
                 raise ValueError("Invalid MFA code")
+
+            # Mark verified and remove challenge
+            await self.redis.delete(f"mfa_login_challenge:{mfa_challenge_id}")
+
         
         # Reset brute force counter
         await self.brute_force.reset_failed_attempts(email, ip_address)
