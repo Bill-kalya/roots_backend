@@ -382,6 +382,7 @@ class AuthService:
         if request is None:
             raise ValueError("Request context is required for login")
         ip_address = request.client.host
+        fingerprint = self.fingerprinter.generate_fingerprint(request)
         
         # Check brute force lockout
         is_locked, lockout_seconds = await self.brute_force.is_locked(email, ip_address)

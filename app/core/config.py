@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     MPESA_TOKEN_URL: Optional[str] = None
     MPESA_STK_URL: Optional[str] = None
     MPESA_CALLBACK_URL: Optional[str] = None
+    MPESA_CALLBACK_SECRET: Optional[str] = None
     MPESA_ACCOUNT_REFERENCE: str = "ROOTS"
 
     APP_VERSION: str = "1.0.0"
@@ -100,7 +101,8 @@ class Settings(BaseSettings):
     # =========================================================================
     # JWT — Enhanced Security
     # =========================================================================
-    SECRET_KEY: str = secrets.token_urlsafe(32)
+    _DEFAULT_SECRET_KEY: str = secrets.token_urlsafe(32)
+    SECRET_KEY: str = _DEFAULT_SECRET_KEY
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
@@ -157,6 +159,8 @@ class Settings(BaseSettings):
         "http://localhost:4173",    # Vite preview
         "http://127.0.0.1:5173",
         "http://127.0.0.1:3000",
+        "https://shoproots.africa",
+        "https://www.shoproots.africa",
     ]
     CORS_CREDENTIALS: bool = True
     CORS_METHODS: List[str] = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
@@ -168,6 +172,14 @@ class Settings(BaseSettings):
         "X-Refresh-Token",
     ]
     CORS_MAX_AGE: int = 600  # seconds browsers cache preflight — reduces OPTIONS spam
+
+    TRUSTED_HOSTS: List[str] = [
+        "localhost",
+        "127.0.0.1",
+        "shoproots.africa",
+        "www.shoproots.africa",
+        "api.shoproots.africa",
+    ]
 
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
@@ -217,7 +229,30 @@ class Settings(BaseSettings):
                     pass
             return [i.strip() for i in stripped.split(",") if i.strip()]
         return v
+    @field_validator("TRUSTED_HOSTS", mode="before")
+    @classmethod
+    def parse_trusted_hosts(cls, v) -> List[str]:
+        if isinstance(v, str):
+            stripped = v.strip()
+            if stripped.startswith("["):
+                try:
+                    parsed = json.loads(stripped)
+                except json.JSONDecodeError as e:
+                    raise ValueError(f"TRUSTED_HOSTS is not valid JSON: {e}")
+            else:
+                parsed = [h.strip() for h in stripped.split(",") if h.strip()]
+        elif isinstance(v, list):
+            parsed = v
+        else:
+            raise ValueError(f"TRUSTED_HOSTS must be a list or string, got {type(v)}")
 
+        cleaned = [h for h in parsed if h]
+        if not cleaned:
+            raise ValueError(
+                "TRUSTED_HOSTS resolved to an empty list. "
+                "Set it in your .env, e.g.: TRUSTED_HOSTS=[\"api.shoproots.africa\"]"
+            )
+        return cleaned
     # =========================================================================
     # RATE LIMITING
     # =========================================================================
@@ -265,8 +300,13 @@ class Settings(BaseSettings):
                     "CORS_ORIGINS cannot contain '*' in production. "
                     "Specify exact origins."
                 )
+            if "*" in self.TRUSTED_HOSTS:
+                raise ValueError(
+                    "TRUSTED_HOSTS cannot contain '*' in production. "
+                    "Specify exact hostnames."
+                )
             # Default secret key is insecure
-            if self.SECRET_KEY == secrets.token_urlsafe(32):
+            if self.SECRET_KEY == self._DEFAULT_SECRET_KEY:
                 raise ValueError(
                     "SECRET_KEY must be explicitly set in production."
                 )

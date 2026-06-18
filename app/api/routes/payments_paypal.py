@@ -7,7 +7,7 @@ from decimal import Decimal
 from redis import asyncio as aioredis
 
 from app.db.session import get_db
-from app.core.dependencies import get_current_active_user
+from app.core.dependencies import get_current_active_user, get_redis
 from app.models.user import User
 from app.models.order import Order, OrderStatus
 from app.models.payment import Payment, PaymentStatus
@@ -19,6 +19,7 @@ from app.schemas.paypal import (
     PayPalCaptureRequest,
     PayPalCaptureResponse,
 )
+
 
 import logging
 logger = logging.getLogger(__name__)
@@ -129,7 +130,9 @@ async def paypal_capture(
     payload: PayPalCaptureRequest,
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
+    redis: aioredis.Redis = Depends(get_redis),
 ):
+
     stmt = select(Order).where(Order.id == payload.order_id)
     res = await db.execute(stmt)
     order: Order | None = res.scalar_one_or_none()
@@ -182,18 +185,44 @@ async def paypal_capture(
 
     capture_id = capture_res.get("capture_id")
 
+    # Reconcile captured amount/currency (financial integrity)
+    captured_amount = capture_res.get("amount")
+    captured_currency = capture_res.get("currency")
+    expected_amount = Decimal(str(order.total))
+
+    if captured_currency != "USD":
+        payment.status = PaymentStatus.FAILED.value
+        payment.result_code = "CAPTURE_CURRENCY_MISMATCH"
+        await db.commit()
+        raise HTTPException(status_code=400, detail="Captured currency mismatch")
+
+    try:
+        captured_amount_dec = Decimal(str(captured_amount))
+    except Exception:
+        payment.status = PaymentStatus.FAILED.value
+        payment.result_code = "CAPTURE_AMOUNT_INVALID"
+        await db.commit()
+        raise HTTPException(status_code=400, detail="Captured amount invalid")
+
+    if captured_amount_dec != expected_amount:
+        payment.status = PaymentStatus.FAILED.value
+        payment.result_code = "CAPTURE_AMOUNT_MISMATCH"
+        await db.commit()
+        raise HTTPException(status_code=400, detail="Captured amount mismatch")
+
     # Confirm internal payment (marks order PAID + queues fulfillment)
-    order_service = OrderService(db, redis_client=None)  # inventory commit uses redis keys in some impls
+    order_service = OrderService(db=db, redis_client=redis)
     await order_service.confirm_payment(order.id, capture_id)
 
-
     # Update Payment row
+    # (OrderService already makes the order idempotent; this makes payment updates safe too)
     payment.status = PaymentStatus.COMPLETED.value
     payment.result_code = "COMPLETED"
     payment.raw_payload = str(capture_res.get("raw"))[:5000]
     payment.provider_transaction_id = str(capture_id or payload.paypal_order_id)
 
     await db.commit()
+
 
     return PayPalCaptureResponse(
         success=True,

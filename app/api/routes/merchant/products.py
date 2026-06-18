@@ -15,6 +15,7 @@ from app.models.product import Product
 from app.schemas.product import ProductResponse
 from app.services.product_service import ProductService
 from app.core.config import settings
+from app.utils.file_upload import save_upload_image, validate_upload_file
 import json
 
 
@@ -57,20 +58,15 @@ async def create_product(
 ):
     """Create a new product (Merchant only)."""
 
-    ext = Path(image.filename).suffix or ".jpg"
-    safe_name = f"{uuid4().hex}{ext}"
-    UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
-    file_path = UPLOADS_DIR / safe_name
-
-    contents = await image.read()
-    file_path.write_bytes(contents)
-
-    image_url = f"{settings.PUBLIC_API_BASE_URL}/uploads/{quote(safe_name)}"
+    await validate_upload_file(image)
+    filename = await save_upload_image(image)
+    image_url = f"{settings.PUBLIC_API_BASE_URL}/uploads/{quote(filename)}"
 
     parsed_materials = _parse_json_array(materials)
     parsed_gallery = _parse_json_array(gallery)
 
     new_product = Product(
+        merchant_id=current_user.id,
         name=name,
         description=description,
         long_description=long_description,
@@ -138,6 +134,9 @@ async def update_merchant_product(
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
+    if product.merchant_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You do not have permission to modify this product")
+
     parsed_materials = _parse_json_array(materials)
     parsed_gallery = _parse_json_array(gallery)
 
@@ -157,15 +156,9 @@ async def update_merchant_product(
     product.gallery = parsed_gallery
 
     if image is not None:
-        ext = Path(image.filename).suffix or ".jpg"
-        safe_name = f"{uuid4().hex}{ext}"
-        UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
-        file_path = UPLOADS_DIR / safe_name
-
-        contents = await image.read()
-        file_path.write_bytes(contents)
-
-        product.image_url = f"{settings.PUBLIC_API_BASE_URL}/uploads/{quote(safe_name)}"
+        await validate_upload_file(image)
+        filename = await save_upload_image(image)
+        product.image_url = f"{settings.PUBLIC_API_BASE_URL}/uploads/{quote(filename)}"
 
     await db.commit()
     await db.refresh(product)
@@ -180,6 +173,13 @@ async def delete_merchant_product(
     db: AsyncSession = Depends(get_db),
 ):
     """Delete merchant's product."""
-    # NOTE: implement DB delete + cache invalidation when merchant ownership is wired.
-    return {"message": f"Delete product {product_id}"}
+    product = await db.get(Product, product_id)
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    if product.merchant_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You do not have permission to delete this product")
+
+    await db.delete(product)
+    await db.commit()
+    return {"message": f"Product {product_id} deleted successfully"}
 

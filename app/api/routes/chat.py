@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSock
 from sqlalchemy import select
 
 from app.cache.redis_manager import redis_manager
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_user  # noqa: F401
 from app.db.session import get_db
 from app.models.conversation import Conversation
 from app.models.message import Message
@@ -48,7 +48,7 @@ def _serialize_history(messages: list[Message]) -> list[dict]:
             {
                 "id": str(m.id),
                 "from": "customer",
-                "text": m.content,
+                "content": m.content,
                 "time": m.created_at.strftime("%H:%M") if getattr(m, "created_at", None) else "",
                 "status": m.status,
             }
@@ -226,7 +226,7 @@ async def chat_ws(
                     "type": "message",
                     "id": message_id,
                     "from": "customer" if sender_id == str(customer_id) else "merchant",
-                    "text": content,
+                    "content": content,
                     "encrypted": bool(msg.get("encrypted", False)),
                     "time": time_str,
                     "status": status,
@@ -254,6 +254,10 @@ async def chat_ws(
 
                 is_encrypted = bool(data.get("encrypted", False))
                 sender_id = user.id
+
+                # If message is encrypted, keep ciphertext in `content` (same as stored `msg.content`).
+                # If message is not encrypted, `content` contains plaintext.
+
 
 
                 # Ensure conversation exists; create if missing

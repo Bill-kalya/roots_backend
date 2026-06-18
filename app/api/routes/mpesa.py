@@ -1,14 +1,18 @@
 ﻿from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 from typing import Any, Dict, Optional
 import json
 import logging
 import re
 
 from app.db.session import get_db
-from app.models.payment import Payment
+from app.models.payment import Payment, PaymentStatus
 from app.services.mpesa_service import MpesaService
+from app.core.dependencies import get_current_user
+
+
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["M-Pesa"])
@@ -38,12 +42,16 @@ def _normalize_amount(raw):
 
 
 @router.post("/stk-push")
-async def stk_push(payload: Dict[str, Any], db: AsyncSession = Depends(get_db)):
+async def stk_push(
+    payload: Dict[str, Any],
+    current_user=Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+):
     try:
         phone = _normalize_phone(payload.get("phone"))
-        amount = _normalize_amount(payload.get("amount"))
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
+
 
     order_id_raw = payload.get("order_id")
     if not order_id_raw:
@@ -61,20 +69,32 @@ async def stk_push(payload: Dict[str, Any], db: AsyncSession = Depends(get_db)):
     if not order_obj:
         raise HTTPException(status_code=404, detail="Order not found")
 
+    # Canonical amount comes from the order stored in DB (never trust client payload)
+    try:
+        canonical_amount = int(float(order_obj.total))
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=500, detail="Invalid order total")
+
+    if canonical_amount < 1:
+        raise HTTPException(status_code=422, detail="Order total must be at least 1 KES")
+
     order_reference = f"ORDER-{order_obj.id}"
-
-
 
     try:
         response = await MpesaService().stk_push(
-
             phone=phone,
-            amount=str(amount),
+            amount=str(canonical_amount),
             order_reference=order_reference,
         )
+
     except Exception as exc:
-        logger.exception("STK push failed phone=%s amount=%s", phone, amount)
+        logger.exception(
+            "STK push failed phone=%s amount=%s",
+            phone,
+            canonical_amount,
+        )
         raise HTTPException(status_code=502, detail="M-Pesa STK push failed. Please try again.")
+
 
     checkout_request_id = response.get("CheckoutRequestID")
     merchant_request_id = response.get("MerchantRequestID")
@@ -86,14 +106,15 @@ async def stk_push(payload: Dict[str, Any], db: AsyncSession = Depends(get_db)):
     payment = Payment(
         order_id=order_obj.id,
         provider="mpesa",
-        status="pending",
-        amount=str(amount),
+        status=PaymentStatus.PENDING,
+        amount=str(canonical_amount),
         currency="KES",
         phone=phone,
         checkout_request_id=checkout_request_id,
         provider_transaction_id=merchant_request_id or None,
         raw_payload=None,
     )
+
 
     db.add(payment)
     await db.commit()
@@ -110,6 +131,15 @@ async def stk_push(payload: Dict[str, Any], db: AsyncSession = Depends(get_db)):
 
 @router.post("/callback")
 async def mpesa_callback(request: Request, db: AsyncSession = Depends(get_db)):
+    expected_secret = settings.MPESA_CALLBACK_SECRET
+    if expected_secret:
+        received_secret = request.headers.get("X-Mpesa-Callback-Secret")
+        if not received_secret or received_secret != expected_secret:
+            logger.warning(
+                "Rejected M-Pesa callback with invalid or missing secret header"
+            )
+            return {"ResultCode": 0, "ResultDesc": "Accepted"}
+
     try:
         payload = await request.json()
     except Exception:
@@ -125,20 +155,38 @@ async def mpesa_callback(request: Request, db: AsyncSession = Depends(get_db)):
         logger.warning("Malformed callback: %s", payload)
         return {"ResultCode": 0, "ResultDesc": "Accepted"}
 
-    stmt = select(Payment).where(Payment.checkout_request_id == checkout_request_id)
+    stmt = (
+        select(Payment)
+        .where(Payment.checkout_request_id == checkout_request_id)
+        .with_for_update()
+    )
     result = await db.execute(stmt)
     payment: Optional[Payment] = result.scalar_one_or_none()
 
     if not payment:
         return {"ResultCode": 0, "ResultDesc": "Accepted"}
 
-    if payment.status in ("completed", "failed"):
+
+    if payment.status in (
+        PaymentStatus.COMPLETED,
+        PaymentStatus.FAILED,
+    ):
         return {"ResultCode": 0, "ResultDesc": "Accepted"}
+
 
     payment.result_code = result_code
 
     if result_code == "0":
-        payment.status = "completed"
+        payment.status = PaymentStatus.COMPLETED
+
+        callback_amount = next(
+            (
+                i.get("Value")
+                for i in items
+                if i.get("Name") == "Amount"
+            ),
+            None,
+        )
         receipt = next(
             (
                 i.get("Value")
@@ -147,7 +195,36 @@ async def mpesa_callback(request: Request, db: AsyncSession = Depends(get_db)):
             ),
             None,
         )
+
+        if callback_amount is not None:
+            try:
+                callback_amount_int = int(float(callback_amount))
+            except (TypeError, ValueError):
+                logger.error(
+                    "Amount mismatch (invalid callback amount) payment_id=%s expected=%s received=%s",
+                    payment.id,
+                    payment.amount,
+                    callback_amount,
+                )
+                payment.status = PaymentStatus.FAILED
+                payment.result_code = result_code
+                await db.commit()
+                return {"ResultCode": 0, "ResultDesc": "Accepted"}
+
+            if int(float(payment.amount)) != callback_amount_int:
+                logger.error(
+                    "Amount mismatch payment_id=%s expected=%s received=%s",
+                    payment.id,
+                    payment.amount,
+                    callback_amount_int,
+                )
+                payment.status = PaymentStatus.FAILED
+                payment.result_code = result_code
+                await db.commit()
+                return {"ResultCode": 0, "ResultDesc": "Accepted"}
+
         payment.mpesa_receipt = str(receipt) if receipt else None
+
         logger.info(
             "Payment completed checkout_request_id=%s receipt=%s",
             checkout_request_id,
@@ -159,15 +236,22 @@ async def mpesa_callback(request: Request, db: AsyncSession = Depends(get_db)):
 
             redis = request.app.state.redis
             order_service = OrderService(db=db, redis_client=redis)
+
             try:
                 await order_service.confirm_payment(
                     payment.order_id,
                     payment.mpesa_receipt,
                 )
-            except ValueError:
-                pass
+            except ValueError as exc:
+                logger.error(
+                    "confirm_payment failed order_id=%s error=%s",
+                    payment.order_id,
+                    exc,
+                )
+
     else:
-        payment.status = "failed"
+        payment.status = PaymentStatus.FAILED
+
         logger.warning(
             "Payment failed checkout_request_id=%s code=%s desc=%s",
             checkout_request_id,
@@ -186,15 +270,41 @@ async def mpesa_callback(request: Request, db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/status/{checkout_request_id}")
-async def payment_status(checkout_request_id: str, db: AsyncSession = Depends(get_db)):
+async def payment_status(
+    checkout_request_id: str,
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+
     if not checkout_request_id or len(checkout_request_id) > 255:
         raise HTTPException(status_code=422, detail="Invalid checkout_request_id")
 
-    stmt = select(Payment).where(Payment.checkout_request_id == checkout_request_id)
+    from app.models.order import Order
+
+    stmt = (
+        select(Payment)
+        .join(Order, Payment.order_id == Order.id)
+        .where(
+            Payment.checkout_request_id == checkout_request_id,
+            Order.user_id == current_user.id,
+        )
+    )
+
     result = await db.execute(stmt)
+
     payment: Optional[Payment] = result.scalar_one_or_none()
+
 
     if not payment:
         return {"status": "not_found"}
 
-    return {"status": payment.status, "receipt": payment.mpesa_receipt}
+    status = (
+        payment.status.value
+        if hasattr(payment.status, "value")
+        else str(payment.status)
+    )
+
+
+
+    return {"status": status, "receipt": payment.mpesa_receipt}
+

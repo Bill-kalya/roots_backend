@@ -24,6 +24,7 @@ from app.services.stripe_service import StripeService
 from app.core.config import settings
 
 
+
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["Stripe"])
 
@@ -97,6 +98,9 @@ async def stripe_webhook(
     db: AsyncSession = Depends(get_db),
     redis: aioredis.Redis = Depends(get_redis),
 ):
+    if stripe is None:
+        raise HTTPException(status_code=503, detail="Stripe SDK not installed")
+
     # Important: Stripe requires the raw body bytes
     payload = await request.body()
     sig_header = request.headers.get("stripe-signature")
@@ -117,45 +121,101 @@ async def stripe_webhook(
     # Handle only what we need
     if event["type"] == "payment_intent.succeeded":
         payment_intent = event["data"]["object"]
+        payment_intent_id = payment_intent.get("id")
 
-        metadata = payment_intent.get("metadata") or {}
-        order_id = metadata.get("order_id")
-        payment_id = metadata.get("payment_id")
-
-        if not order_id:
-            logger.warning("Stripe payment_intent missing order_id metadata")
+        if not payment_intent_id:
+            logger.warning("Stripe payment_intent missing id")
             return {"received": True}
 
-        # Idempotency: avoid confirming same Stripe PaymentIntent multiple times
-        existing_payment = None
-        if payment_id:
-            stmt = select(Payment).where(Payment.id == UUID(payment_id), Payment.provider == "stripe")
-            res = await db.execute(stmt)
-            existing_payment = res.scalar_one_or_none()
-
-        # Confirm internal payment (OrderService will check order status)
-        order_service = OrderService(db, redis_client=redis)
+        # --- C: webhook idempotency (minimal; degrade gracefully if table missing) ---
+        from sqlalchemy import text as sql_text
+        webhook_idempotent_checked = False
         try:
-            await order_service.confirm_payment(UUID(order_id), payment_intent.get("id"))
+            existing = await db.execute(
+                sql_text(
+                    "SELECT 1 FROM stripe_webhook_events WHERE event_id = :event_id"
+                ).bindparams(event_id=event.get("id"))
+            )
+            webhook_idempotent_checked = True
+            if existing.first():
+                return {"received": True}
         except Exception as e:
-            # If OrderService rejects due to status, treat as idempotent
-            logger.info("Order confirmation skipped/failed (idempotent): %s", e)
+            # Table may not exist yet (migration not deployed). We still process
+            # settlement with A+B validations, but skip idempotency persistence.
+            logger.warning("Stripe webhook idempotency table missing/unavailable: %s", e)
+            webhook_idempotent_checked = False
 
-        # Update Payment row if we can locate it
-        # Prefer updating by payment_intent id because payment_id may be absent
+
+        # --- A + B: settle by PI id -> Payment -> order_id, validate amount+currency ---
         stmt_payment = select(Payment).where(
             Payment.provider == "stripe",
-            Payment.provider_transaction_id == payment_intent.get("id"),
+            Payment.provider_transaction_id == payment_intent_id,
         )
         res_payment = await db.execute(stmt_payment)
         payment_row: Payment | None = res_payment.scalar_one_or_none()
 
-        if payment_row and payment_row.status != PaymentStatus.COMPLETED.value:
+        if not payment_row:
+            logger.error("No internal Payment row for Stripe payment_intent=%s", payment_intent_id)
+            return {"received": True}
+
+        if not payment_row.order_id:
+            logger.error("Internal Payment row missing order_id for Stripe payment_intent=%s", payment_intent_id)
+            return {"received": True}
+
+        # Validate status from Stripe intent
+        if payment_intent.get("status") != "succeeded":
+            return {"received": True}
+
+        # amount is stored in internal Payment.amount as a decimal (major units)
+        expected_amount = int(Decimal(str(payment_row.amount)) * 100)
+        stripe_amount = payment_intent.get("amount")
+        if stripe_amount != expected_amount:
+            logger.error(
+                "Amount mismatch for Stripe payment_intent=%s. Stripe=%s Internal=%s",
+                payment_intent_id,
+                stripe_amount,
+                expected_amount,
+            )
+            return {"received": True}
+
+        stripe_currency = (payment_intent.get("currency") or "").lower()
+        internal_currency = (payment_row.currency or "").lower()
+        if stripe_currency != internal_currency:
+            logger.error(
+                "Currency mismatch for Stripe payment_intent=%s. Stripe=%s Internal=%s",
+                payment_intent_id,
+                stripe_currency,
+                internal_currency,
+            )
+            return {"received": True}
+
+        # Confirm internal payment (OrderService will check order status)
+        order_service = OrderService(db, redis_client=redis)
+        try:
+            await order_service.confirm_payment(payment_row.order_id, payment_intent_id)
+        except Exception as e:
+            # If OrderService rejects due to status, treat as idempotent
+            logger.info("Order confirmation skipped/failed (idempotent): %s", e)
+
+        # Mark Payment completed if not already
+        if payment_row.status != PaymentStatus.COMPLETED.value:
             payment_row.status = PaymentStatus.COMPLETED.value
             payment_row.result_code = "COMPLETED"
-            payment_row.provider_transaction_id = payment_intent.get("id")
             payment_row.raw_payload = str(payment_intent)[:5000]
             await db.commit()
+
+        # Record webhook processed
+        await db.execute(
+            sql_text(
+                "INSERT INTO stripe_webhook_events(event_id, event_type, processed_at) "
+                "VALUES (:event_id, :event_type, NOW())"
+            ).bindparams(
+                event_id=event.get("id"),
+                event_type=event.get("type"),
+            )
+        )
+        await db.commit()
+
 
     return {"received": True}
 

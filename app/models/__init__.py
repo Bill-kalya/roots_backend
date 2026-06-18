@@ -6,6 +6,7 @@ from app.models.newsletter import NewsletterSubscriber
 from app.models.conversation import Conversation
 from app.models.message import Message
 from app.models.receipt import Receipt
+from app.models.merchant_payout_settings import MerchantPayoutSettings, MerchantPayoutMethod
 
 
 # Import all models so Base.metadata knows about them
@@ -15,6 +16,8 @@ __all__ = [
     "Order",
     "OrderItem",
     "Receipt",
+    "MerchantPayoutSettings",
+    "MerchantPayoutMethod",
     "Testimonial",
     "NewsletterSubscriber",
     "Conversation",

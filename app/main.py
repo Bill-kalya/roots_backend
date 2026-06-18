@@ -50,6 +50,7 @@ from app.api.routes.receipts import router as receipts_router
 # Role-based route imports
 from app.api.routes.user import products as user_products, profile as user_profile, orders as user_orders
 from app.api.routes.merchant import products as merchant_products, orders as merchant_orders, analytics as merchant_analytics
+from app.api.routes.merchant import payout_settings as merchant_payout_settings
 from app.api.routes.admin import dashboard as admin_dashboard, users as admin_users, products as admin_products, settings as admin_settings
 from app.api.errors import (
     request_validation_exception_handler,
@@ -201,7 +202,7 @@ app.add_exception_handler(Exception, global_exception_handler)
 # Enterprise middleware stack (optimized order)
 app.add_middleware(GZipMiddleware, minimum_size=1000)  # Compress responses > 1KB
 
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.TRUSTED_HOSTS)
 app.add_middleware(RequestIDMiddleware)
 
 # CORS with specific configuration
@@ -377,6 +378,7 @@ app.include_router(user_orders.router, prefix="/api/user/orders", tags=["User - 
 app.include_router(merchant_products.router, prefix="/api/merchant/products", tags=["Merchant - Products"])
 app.include_router(merchant_orders.router, prefix="/api/merchant/orders", tags=["Merchant - Orders"])
 app.include_router(merchant_analytics.router, prefix="/api/merchant/analytics", tags=["Merchant - Analytics"])
+app.include_router(merchant_payout_settings.router, prefix="/api/merchant", tags=["Merchant - Payout Settings"])
 # NOTE: merchant analytics router provides GET / for /api/merchant/analytics
 
 
