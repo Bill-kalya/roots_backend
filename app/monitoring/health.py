@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 from typing import Dict, Any
 import asyncio
 from datetime import datetime
@@ -7,7 +7,7 @@ from app.cache.redis_manager import redis_manager
 
 router = APIRouter()
 
-@router.get("/")
+@router.get("", tags=["Health"], summary="Overall service health")
 async def health_check() -> Dict[str, Any]:
     """Comprehensive health check for load balancers and k8s"""
     

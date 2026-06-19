@@ -277,39 +277,6 @@ async def enterprise_middleware(request: Request, call_next):
     return response
 
 # Kubernetes probes
-@app.get("/health/live", tags=["Health"])
-async def liveness_probe():
-    """Kubernetes liveness probe"""
-    return {
-        "status": "alive",
-        "timestamp": datetime.utcnow().isoformat()
-    }
-
-@app.get("/health/ready", tags=["Health"])
-async def readiness_probe():
-    """Kubernetes readiness probe"""
-    db_health = await db_manager.health_check()
-    redis_health = await redis_manager.health_check()
-    
-    is_ready = db_health["write_engine"] and redis_health["connected"]
-    
-    status_code = 200 if is_ready else 503
-    return JSONResponse(
-        content={
-            "ready": is_ready,
-            "checks": {
-                "database": db_health["write_engine"],
-                "redis": redis_health["connected"]
-            }
-        },
-        status_code=status_code,
-    )
-
-@app.get("/health/startup", tags=["Health"])
-async def startup_probe():
-    """Kubernetes startup probe"""
-    return {"initialized": True}
-
 # Metrics endpoint
 @app.get("/metrics", include_in_schema=False)
 async def metrics():
@@ -399,15 +366,6 @@ app.include_router(admin_dashboard.router, prefix="/api/admin/dashboard", tags=[
 app.include_router(admin_users.router, prefix="/api/admin/users", tags=["Admin - Users"])
 app.include_router(admin_products.router, prefix="/api/admin/products", tags=["Admin - Products"])
 app.include_router(admin_settings.router, prefix="/api/admin/settings", tags=["Admin - Settings"])
-
-@app.get("/health")
-async def health():
-    return {
-        "status": "healthy",
-        "service": "roots-backend",
-        "version": "2.0.0",
-        "rbac_enabled": True
-    }
 
 @app.get("/")
 async def root():
