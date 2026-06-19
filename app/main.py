@@ -202,8 +202,12 @@ app.add_exception_handler(Exception, global_exception_handler)
 # Enterprise middleware stack (optimized order)
 app.add_middleware(GZipMiddleware, minimum_size=1000)  # Compress responses > 1KB
 
-# TrustedHostMiddleware: allow all in dev, restrict in production
-trusted_hosts = settings.TRUSTED_HOSTS if settings.ENVIRONMENT == "production" else ["*"]
+# TrustedHostMiddleware: allow all in non-production and include Railway probe hostnames in production.
+if settings.ENVIRONMENT == "production":
+    trusted_hosts = list(settings.TRUSTED_HOSTS) + ["*.up.railway.app", "127.0.0.1", "localhost"]
+else:
+    trusted_hosts = ["*"]
+
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=trusted_hosts)
 app.add_middleware(RequestIDMiddleware)
 
