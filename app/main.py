@@ -202,7 +202,9 @@ app.add_exception_handler(Exception, global_exception_handler)
 # Enterprise middleware stack (optimized order)
 app.add_middleware(GZipMiddleware, minimum_size=1000)  # Compress responses > 1KB
 
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.TRUSTED_HOSTS)
+# TrustedHostMiddleware: allow all in dev, restrict in production
+trusted_hosts = settings.TRUSTED_HOSTS if settings.ENVIRONMENT == "production" else ["*"]
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=trusted_hosts)
 app.add_middleware(RequestIDMiddleware)
 
 # CORS with specific configuration
