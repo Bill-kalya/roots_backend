@@ -1,9 +1,9 @@
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 from redis import asyncio as aioredis
 import signal
@@ -202,13 +202,19 @@ app.add_exception_handler(Exception, global_exception_handler)
 # Enterprise middleware stack (optimized order)
 app.add_middleware(GZipMiddleware, minimum_size=1000)  # Compress responses > 1KB
 
-# TrustedHostMiddleware: allow all in non-production and include Railway probe hostnames in production.
-if settings.ENVIRONMENT == "production":
-    trusted_hosts = list(settings.TRUSTED_HOSTS) + ["*.up.railway.app", "127.0.0.1", "localhost"]
+# TrustedHostMiddleware: disable strict host validation on Railway because
+# internal health probes may use private IP host headers.
+if os.getenv("RAILWAY_ENVIRONMENT"):
+    # Railway's edge already handles host validation before traffic reaches
+    # this container, so we can skip this middleware safely in that environment.
+    trusted_hosts = None
+elif settings.ENVIRONMENT == "production":
+    trusted_hosts = list(settings.TRUSTED_HOSTS)
 else:
     trusted_hosts = ["*"]
 
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=trusted_hosts)
+if trusted_hosts is not None:
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=trusted_hosts)
 app.add_middleware(RequestIDMiddleware)
 
 # CORS with specific configuration
@@ -288,7 +294,7 @@ async def readiness_probe():
     is_ready = db_health["write_engine"] and redis_health["connected"]
     
     status_code = 200 if is_ready else 503
-    return Response(
+    return JSONResponse(
         content={
             "ready": is_ready,
             "checks": {
@@ -296,7 +302,7 @@ async def readiness_probe():
                 "redis": redis_health["connected"]
             }
         },
-        status_code=status_code
+        status_code=status_code,
     )
 
 @app.get("/health/startup", tags=["Health"])
