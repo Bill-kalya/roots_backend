@@ -1,6 +1,6 @@
 """add stripe_webhook_events table for webhook idempotency
 
-Revision ID: xxxx_add_stripe_webhook_events_table
+Revision ID: add_stripe_webhook_events
 Revises: 13b29a22f72c
 Create Date: 2026-06-15
 
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = "xxxx_add_stripe_webhook_events_table"
+revision = "add_stripe_webhook_events"
 down_revision = "13b29a22f72c"
 branch_labels = None
 depends_on = None
