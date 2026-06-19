@@ -273,6 +273,24 @@ async def enterprise_middleware(request: Request, call_next):
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    # Content Security Policy: allow Stripe scripts/iframes and the configured API
+    try:
+        public_api = settings.PUBLIC_API_BASE_URL.rstrip("/")
+    except Exception:
+        public_api = ""
+
+    csp_parts = [
+        "default-src 'self'",
+        "script-src 'self' https://js.stripe.com",
+        "style-src 'self' 'unsafe-inline'",
+        "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
+        f"connect-src 'self' {public_api} https://api.stripe.com",
+        "img-src 'self' data: https:",
+    ]
+    response.headers["Content-Security-Policy"] = "; ".join(csp_parts)
+
+    # Permissions-Policy: remove deprecated features like ambient-light-sensor
+    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
     
     return response
 
