@@ -10,7 +10,11 @@ import re
 from app.db.session import get_db
 from app.models.payment import Payment, PaymentStatus
 from app.services.mpesa_service import MpesaService
-from app.core.dependencies import get_current_user
+from app.core.dependencies import (
+    get_current_user,
+    get_current_active_user,
+)
+from app.core.config import settings
 
 
 
@@ -63,7 +67,10 @@ async def stk_push(
         raise HTTPException(status_code=422, detail="order_id is required")
 
     order = await db.execute(
-        select(Order).where(Order.id == order_id_raw)
+        select(Order).where(
+            Order.id == order_id_raw,
+            Order.user_id == current_user.id,
+        )
     )
     order_obj = order.scalar_one_or_none()
     if not order_obj:
