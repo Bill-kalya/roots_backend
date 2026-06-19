@@ -3654,3 +3654,9 @@
 {"message": "System health monitor started (interval: 60s)", "timestamp": "2026-06-19T05:41:53.513352", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
 {"message": "\u2705 All services initialized in 13.28s", "timestamp": "2026-06-19T05:41:56.077187", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
 {"message": "Starlette HTTP exception", "path": "/favicon.ico", "status_code": 404, "detail": "Not Found", "timestamp": "2026-06-19T05:42:20.621094", "level": "WARNING", "logger": "app.api.errors", "service": "roots-backend", "request_id": "ae3ff0e3-0e77-4a0a-9de7-4f4f1112d456"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-06-19T05:46:57.134774", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Expired 0 old carts", "timestamp": "2026-06-19T06:41:53.531189", "level": "INFO", "logger": "app.services.cart_service", "service": "roots-backend"}
+{"message": "Expired 0 old carts", "timestamp": "2026-06-19T07:41:53.543749", "level": "INFO", "logger": "app.services.cart_service", "service": "roots-backend"}
+{"message": "Expired 0 old carts", "timestamp": "2026-06-19T08:41:53.559518", "level": "INFO", "logger": "app.services.cart_service", "service": "roots-backend"}
+{"message": "Expired 0 old carts", "timestamp": "2026-06-19T09:41:53.565156", "level": "INFO", "logger": "app.services.cart_service", "service": "roots-backend"}
+{"message": "Expired 0 old carts", "timestamp": "2026-06-19T10:41:53.578986", "level": "INFO", "logger": "app.services.cart_service", "service": "roots-backend"}

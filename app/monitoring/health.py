@@ -7,7 +7,7 @@ from app.cache.redis_manager import redis_manager
 
 router = APIRouter()
 
-@router.get("/health")
+@router.get("/")
 async def health_check() -> Dict[str, Any]:
     """Comprehensive health check for load balancers and k8s"""
     
@@ -38,7 +38,7 @@ async def health_check() -> Dict[str, Any]:
         "service": "roots-backend"
     }
 
-@router.get("/health/ready")
+@router.get("/ready")
 async def readiness_check() -> Dict[str, Any]:
     """Kubernetes readiness probe"""
     # Check if service is ready to accept traffic
@@ -47,7 +47,7 @@ async def readiness_check() -> Dict[str, Any]:
         "timestamp": datetime.utcnow().isoformat()
     }
 
-@router.get("/health/live")
+@router.get("/live")
 async def liveness_check() -> Dict[str, Any]:
     """Kubernetes liveness probe"""
     # Simple check that service is running
