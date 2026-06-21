@@ -396,10 +396,11 @@ async def root():
     }
 
 if __name__ == "__main__":
+    port = int(os.getenv("PORT", 8000))
     uvicorn.run(
         "app.main:app",
         host="0.0.0.0",
-        port=8000,
+        port=port,
         reload=False,  # Disable reload in production
         workers=4,  # Multiple workers for production
         loop="uvloop",
