@@ -31,6 +31,12 @@ def _json_error(request: Request, status_code: int, error: str, message: str, de
     payload = {
         "error": error,
         "message": message,
+        # IMPORTANT: frontend axios calls everywhere (Login.jsx, Register.jsx,
+        # services/api.js) read err.response.data.detail. Without this key,
+        # they silently fall back to the generic axios error string and never
+        # see the real backend reason (wrong password, unverified email,
+        # duplicate email, lockout, etc).
+        "detail": message,
     }
     if details is not None:
         payload["details"] = _make_serializable(details)
@@ -46,11 +52,25 @@ async def request_validation_exception_handler(request: Request, exc: RequestVal
         "Request validation failed",
         extra={"path": request.url.path, "errors": exc.errors()},
     )
+    # Build a human-readable error message from validation errors
+    errors = exc.errors()
+    if errors:
+        first_error = errors[0]
+        field = ".".join(str(x) for x in first_error.get("loc", []))
+        msg = first_error.get("msg", "Invalid input")
+        # E.g. "email: value is not a valid email address" or "password: ensure this value has at least 8 characters"
+        if field and field != "body":
+            user_message = f"{field}: {msg}"
+        else:
+            user_message = msg
+    else:
+        user_message = "Request validation failed"
+    
     return _json_error(
         request,
         status_code=422,
         error="validation_error",
-        message="Request validation failed",
+        message=user_message,
         details=exc.errors(),
     )
 
