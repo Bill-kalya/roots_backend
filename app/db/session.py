@@ -179,6 +179,7 @@ class EnterpriseDatabaseManager:
             logger.error(f"Write engine health check failed: {e}")
         
         status["read_engine"] = status["write_engine"]
+        status["connected"] = status["write_engine"] or status["read_engine"]
         
         return status
     
