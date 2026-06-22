@@ -11,6 +11,16 @@ class UserBase(BaseModel):
     email: EmailStr
     full_name: str
 
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_email(cls, values):
+        # Normalize email to lowercase and strip whitespace before validation
+        if isinstance(values, dict):
+            email = values.get("email")
+            if isinstance(email, str):
+                values["email"] = email.strip().lower()
+        return values
+
 class PasswordStrengthRequest(BaseModel):
     password: str
 
@@ -21,7 +31,16 @@ class PasswordCheckResponse(BaseModel):
     suggestion: str = "Use 8+ chars with Upper, lower, number, special char. Avoid common words."
 
 class ForgotPasswordRequest(BaseModel):
-    email: str
+    email: EmailStr
+
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_email(cls, values):
+        if isinstance(values, dict):
+            email = values.get("email")
+            if isinstance(email, str):
+                values["email"] = email.strip().lower()
+        return values
 
 class ResetPasswordRequest(BaseModel):
     token: str
@@ -67,12 +86,30 @@ class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_email(cls, values):
+        if isinstance(values, dict):
+            email = values.get("email")
+            if isinstance(email, str):
+                values["email"] = email.strip().lower()
+        return values
+
 
 class MFALoginStep2Request(BaseModel):
     email: EmailStr
     password: str
     mfa_code: str
     challenge_id: str
+
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_email(cls, values):
+        if isinstance(values, dict):
+            email = values.get("email")
+            if isinstance(email, str):
+                values["email"] = email.strip().lower()
+        return values
 
 
 class MFALoginStep1Response(BaseModel):
