@@ -125,6 +125,33 @@ class Settings(BaseSettings):
     # (e.g. http://localhost:8000/uploads/<filename>)
     PUBLIC_API_BASE_URL: str = "http://localhost:8000"
 
+    @field_validator("FRONTEND_URL", mode="before")
+    @classmethod
+    def normalize_frontend_url(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        return v.rstrip("/")
+
+    @field_validator("PUBLIC_API_BASE_URL", mode="before")
+    @classmethod
+    def normalize_api_base_url(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        return v.rstrip("/")
+
+    @model_validator(mode="after")
+    def validate_production_urls(self):
+        if self.ENVIRONMENT == "production":
+            if self.FRONTEND_URL.startswith("http://localhost"):
+                raise ValueError(
+                    "FRONTEND_URL must be set to the production frontend origin in production, not localhost."
+                )
+            if self.PUBLIC_API_BASE_URL.startswith("http://localhost"):
+                raise ValueError(
+                    "PUBLIC_API_BASE_URL must be set to the production backend origin in production, not localhost."
+                )
+        return self
+
     # =========================================================================
     # RECEIPTS (Anti-counterfeit / signed verification)
     # =========================================================================
