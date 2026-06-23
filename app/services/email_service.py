@@ -64,12 +64,23 @@ class EmailService:
         if not from_email:
             raise RuntimeError("EMAIL_FROM/RESEND_FROM_EMAIL not configured")
 
+        # Normalize Resend "from".
+        # Expected: either bare email (e.g. noreply@mail.com) OR fully composed
+        # "Name <email>". Our code previously re-wrapped, which caused malformed
+        # strings like "Roots <Roots <noreply@...>>".
+        # If it already looks like "Name <email>", pass through unchanged.
+        if "<" in from_email and ">" in from_email:
+            resend_from = from_email
+        else:
+            resend_from = f"{settings.RESEND_VERIFY_EMAIL_FROM_NAME} <{from_email}>"
+
         payload = {
-            "from": f"{settings.RESEND_VERIFY_EMAIL_FROM_NAME} <{from_email}>",
+            "from": resend_from,
             "to": [email],
             "subject": "Verify your Roots account",
             "html": html,
         }
+
 
         headers = {
             "Authorization": f"Bearer {settings.RESEND_API_KEY}",
