@@ -152,6 +152,7 @@ async def mpesa_callback(request: Request, db: AsyncSession = Depends(get_db)):
     except Exception:
         return {"ResultCode": 0, "ResultDesc": "Accepted"}
 
+
     try:
         callback = payload["Body"]["stkCallback"]
         checkout_request_id = str(callback["CheckoutRequestID"])
@@ -238,6 +239,7 @@ async def mpesa_callback(request: Request, db: AsyncSession = Depends(get_db)):
             payment.mpesa_receipt,
         )
 
+
         if payment.order_id:
             from app.services.order_service import OrderService
 
@@ -267,10 +269,14 @@ async def mpesa_callback(request: Request, db: AsyncSession = Depends(get_db)):
         )
 
 
+    # Avoid persisting full raw callback payload in production (contains
+    # sensitive customer data like phone numbers and receipts).
     try:
-        payment.raw_payload = json.dumps(payload)[:5000]
+        if settings.ENVIRONMENT != "production":
+            payment.raw_payload = json.dumps(payload)[:5000]
     except Exception:
         pass
+
 
     await db.commit()
     return {"ResultCode": 0, "ResultDesc": "Accepted"}

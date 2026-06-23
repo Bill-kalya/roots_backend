@@ -103,6 +103,29 @@ shutdown_handler = GracefulShutdown()
 signal.signal(signal.SIGTERM, lambda s, f: shutdown_handler.signal_handler())
 signal.signal(signal.SIGINT, lambda s, f: shutdown_handler.signal_handler())
 
+def validate_production_settings():
+    """Fail-fast for required production-only M-Pesa configuration."""
+    if settings.ENVIRONMENT != "production":
+        return
+
+    required = {
+        "MPESA_CALLBACK_SECRET": settings.MPESA_CALLBACK_SECRET,
+        "MPESA_CONSUMER_KEY": settings.MPESA_CONSUMER_KEY,
+        "MPESA_CONSUMER_SECRET": settings.MPESA_CONSUMER_SECRET,
+        "MPESA_BUSINESS_SHORT_CODE": settings.MPESA_BUSINESS_SHORT_CODE,
+        "MPESA_PASSKEY": settings.MPESA_PASSKEY,
+        "MPESA_STK_URL": settings.MPESA_STK_URL,
+        "MPESA_TOKEN_URL": settings.MPESA_TOKEN_URL,
+        "MPESA_CALLBACK_URL": settings.MPESA_CALLBACK_URL,
+    }
+
+    missing = [k for k, v in required.items() if not v]
+    if missing:
+        raise RuntimeError(
+            f"Missing required MPESA production settings: {', '.join(missing)}"
+        )
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Enterprise lifecycle management with graceful shutdown"""
@@ -112,11 +135,15 @@ async def lifespan(app: FastAPI):
     start_time = datetime.utcnow()
     
     try:
+        # 🔥 Fail-fast config validation before migrations
+        validate_production_settings()
+
         # 🔥 RUN MIGRATIONS FIRST
         if os.getenv("SKIP_MIGRATIONS") == "true":
             logger.info("⏭️ Skipping migrations")
         else:
             run_migrations()
+
 
         # Initialize connections
         await db_manager.initialize()
@@ -252,23 +279,17 @@ async def enterprise_middleware(request: Request, call_next):
     
     start_time = datetime.utcnow()
     
-    # Rate limiting
-    try:
-        response = await rate_limit_middleware(request, call_next)
-    except Exception as e:
-        # Never let exceptions escape this middleware without a response.
-        logger.error(f"Unhandled exception in enterprise_middleware: {e}", exc_info=True)
-        from fastapi.responses import JSONResponse
-        response = JSONResponse(
-            status_code=500,
-            content={"detail": "Internal server error"},
-        )
+    # Rate limiting / call downstream middleware/route.
+    # IMPORTANT: do not swallow exceptions here; let FastAPI's registered
+    # exception handlers format a consistent JSON response.
+    response = await rate_limit_middleware(request, call_next)
 
     # Add processing time header
     process_time = (datetime.utcnow() - start_time).total_seconds()
     response.headers["X-Process-Time"] = str(process_time)
-    
+
     # Add security headers
+
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
