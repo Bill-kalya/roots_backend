@@ -108,6 +108,14 @@ def validate_production_settings():
     if settings.ENVIRONMENT != "production":
         return
 
+    # Temporary override for diagnosing Railway env var issues.
+    # Set SKIP_MPESA_PRODUCTION_VALIDATION=true on the backend service.
+    if os.getenv("SKIP_MPESA_PRODUCTION_VALIDATION", "false").lower() == "true":
+        logger.warning(
+            "Skipping MPESA production settings validation (SKIP_MPESA_PRODUCTION_VALIDATION=true)"
+        )
+        return
+
     required = {
         "MPESA_CALLBACK_SECRET": settings.MPESA_CALLBACK_SECRET,
         "MPESA_CONSUMER_KEY": settings.MPESA_CONSUMER_KEY,
@@ -265,7 +273,31 @@ async def debug_cors():
     return {
         "cors_origins": settings.CORS_ORIGINS,
         "type": type(settings.CORS_ORIGINS).__name__,
-        "count": len(settings.CORS_ORIGINS)
+        "count": len(settings.CORS_ORIGINS),
+    }
+
+
+@app.get("/debug/mpesa-config")
+async def debug_mpesa_config():
+    """Debug-only endpoint: shows which MPESA env vars are present (boolean only)."""
+    # Intentionally do not return secret values.
+    keys = [
+        "MPESA_CONSUMER_KEY",
+        "MPESA_CONSUMER_SECRET",
+        "MPESA_BUSINESS_SHORT_CODE",
+        "MPESA_PASSKEY",
+        "MPESA_STK_URL",
+        "MPESA_TOKEN_URL",
+        "MPESA_CALLBACK_URL",
+        "MPESA_CALLBACK_SECRET",
+    ]
+
+    return {
+        "ENVIRONMENT": settings.ENVIRONMENT,
+        "SKIP_MPESA_PRODUCTION_VALIDATION": os.getenv(
+            "SKIP_MPESA_PRODUCTION_VALIDATION", "false"
+        ),
+        "mpesa": {k: bool(getattr(settings, k, None)) for k in keys},
     }
 
 # Custom middleware for metrics and rate limiting
