@@ -18,7 +18,18 @@ async def create_receipt(
     current_user=Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    # Server-side only; browser should never call directly.
+    """Receipt minting is restricted.
+
+    This endpoint can be used by server-side flows only. If called by a
+    regular user, block the request to prevent receipt forgery.
+    """
+
+    # Minimal protection: require an admin user.
+    # If your auth system supports roles differently, update `is_admin`.
+    is_admin = bool(getattr(current_user, "is_admin", False) or getattr(current_user, "role", None) == "admin")
+    if not is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+
     try:
         receipt = await generate_receipt(db=db, **payload)
         return receipt

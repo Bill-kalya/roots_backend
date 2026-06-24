@@ -113,7 +113,7 @@ async def stk_push(
     payment = Payment(
         order_id=order_obj.id,
         provider="mpesa",
-        status=PaymentStatus.PENDING,
+        status=PaymentStatus.PENDING.value,
         amount=str(canonical_amount),
         currency="KES",
         phone=phone,
@@ -175,9 +175,11 @@ async def mpesa_callback(request: Request, db: AsyncSession = Depends(get_db)):
         return {"ResultCode": 0, "ResultDesc": "Accepted"}
 
 
+    # Payment.status is stored as a string (see Payment model), so always compare
+    # against enum .value.
     if payment.status in (
-        PaymentStatus.COMPLETED,
-        PaymentStatus.FAILED,
+        PaymentStatus.COMPLETED.value,
+        PaymentStatus.FAILED.value,
     ):
         return {"ResultCode": 0, "ResultDesc": "Accepted"}
 
@@ -205,28 +207,31 @@ async def mpesa_callback(request: Request, db: AsyncSession = Depends(get_db)):
         )
 
         if callback_amount is not None:
+            from decimal import Decimal
+
             try:
-                callback_amount_int = int(float(callback_amount))
-            except (TypeError, ValueError):
+                callback_amount_dec = Decimal(str(callback_amount))
+                payment_amount_dec = Decimal(str(payment.amount))
+            except Exception:
                 logger.error(
                     "Amount mismatch (invalid callback amount) payment_id=%s expected=%s received=%s",
                     payment.id,
                     payment.amount,
                     callback_amount,
                 )
-                payment.status = PaymentStatus.FAILED
+                payment.status = PaymentStatus.FAILED.value
                 payment.result_code = result_code
                 await db.commit()
                 return {"ResultCode": 0, "ResultDesc": "Accepted"}
 
-            if int(float(payment.amount)) != callback_amount_int:
+            if payment_amount_dec != callback_amount_dec:
                 logger.error(
                     "Amount mismatch payment_id=%s expected=%s received=%s",
                     payment.id,
                     payment.amount,
-                    callback_amount_int,
+                    callback_amount_dec,
                 )
-                payment.status = PaymentStatus.FAILED
+                payment.status = PaymentStatus.FAILED.value
                 payment.result_code = result_code
                 await db.commit()
                 return {"ResultCode": 0, "ResultDesc": "Accepted"}
@@ -247,7 +252,7 @@ async def mpesa_callback(request: Request, db: AsyncSession = Depends(get_db)):
             order_service = OrderService(db=db, redis_client=redis)
 
             try:
-                await order_service.confirm_payment(
+                confirmed_order = await order_service.confirm_payment(
                     payment.order_id,
                     payment.mpesa_receipt,
                 )
@@ -257,6 +262,85 @@ async def mpesa_callback(request: Request, db: AsyncSession = Depends(get_db)):
                     payment.order_id,
                     exc,
                 )
+                confirmed_order = None
+
+            # Receipt generation (idempotent by payment_reference)
+            if confirmed_order:
+                try:
+                    from app.services.receipt_service import generate_receipt
+
+                    # Load customer info for receipt. Order model in this repo does
+                    # not snapshot customer fields, so fall back to User.
+                    customer_email = None
+                    customer_name = None
+                    try:
+                        from app.models.user import User
+
+                        user_stmt = select(User).where(User.id == confirmed_order.user_id)
+                        user_res = await db.execute(user_stmt)
+                        user = user_res.scalar_one_or_none()
+                        if user:
+                            customer_email = user.email
+                            customer_name = getattr(user, "full_name", None) or getattr(
+                                user,
+                                "name",
+                                None,
+                            ) or str(user.id)
+                    except Exception:
+                        pass
+
+                    if not customer_email:
+                        # Cannot generate a valid signed receipt without customer email.
+                        raise ValueError("Missing customer email")
+                    if not customer_name:
+                        customer_name = str(customer_email)
+
+                    # Fetch order items for receipt line items.
+                    from app.models.order import OrderItem
+
+                    items_res = await db.execute(
+                        select(OrderItem).where(
+                            OrderItem.order_id == confirmed_order.id
+                        )
+                    )
+                    items = []
+                    for oi in items_res.scalars().all():
+                        items.append(
+                            {
+                                "name": oi.name_snapshot,
+                                "quantity": oi.quantity,
+                                "price": str(oi.price_snapshot),
+                                "line_total": str(
+                                    (oi.price_snapshot * oi.quantity)
+                                ),
+                            }
+                        )
+
+                    # The receipt service is idempotent by payment_reference.
+                    await generate_receipt(
+                        db=db,
+                        order_id=str(confirmed_order.id),
+                        payment_reference=str(payment.mpesa_receipt)
+                        if payment.mpesa_receipt
+                        else str(payment.checkout_request_id),
+                        payment_method="mpesa",
+                        total=float(confirmed_order.total),
+                        currency=str(payment.currency or "KES"),
+                        customer_name=customer_name,
+                        customer_email=customer_email,
+                        items=items,
+                        subtotal=float(confirmed_order.subtotal),
+                        shipping_fee=float(confirmed_order.shipping_fee),
+                    )
+                except Exception as exc:
+                    # Receipt generation must never break the payment callback.
+                    # It is idempotent, so retry on next callback/order flow.
+                    logger.error(
+                        "Receipt generation failed after MPESA payment order_id=%s payment_id=%s error=%s",
+                        payment.order_id,
+                        payment.id,
+                        exc,
+                    )
 
     else:
         payment.status = PaymentStatus.FAILED

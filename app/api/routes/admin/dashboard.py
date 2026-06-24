@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import require_admin
 from app.db.session import get_db
-from app.models.order import Order, OrderItem
+from app.models.order import Order, OrderItem, OrderStatus
 from app.models.product import Product
 from app.models.user import User
 
@@ -26,9 +26,12 @@ async def admin_stats(
     total_products = await db.scalar(select(func.count()).select_from(Product)) or 0
     total_orders = await db.scalar(select(func.count()).select_from(Order)) or 0
 
+    # IMPORTANT: compare against the enum member (DB enum labels are case-sensitive)
     pending_orders = (
         await db.scalar(
-            select(func.count()).select_from(Order).where(Order.status == "pending")
+            select(func.count()).select_from(Order).where(
+                Order.status == OrderStatus.PENDING
+            )
         )
         or 0
     )
@@ -77,7 +80,9 @@ async def admin_stats(
 
     this_month_orders = (
         await db.scalar(
-            select(func.count()).select_from(Order).where(Order.created_at >= month_start)
+            select(func.count()).select_from(Order).where(
+                Order.created_at >= month_start
+            )
         )
         or 0
     )
@@ -143,7 +148,9 @@ async def admin_stats(
         "total_products": int(total_products),
         "pending_orders": int(pending_orders),
         "low_stock": int(low_stock),
-        "revenue_growth": growth_pct(float(this_month_revenue), float(prev_month_revenue)),
+        "revenue_growth": growth_pct(
+            float(this_month_revenue), float(prev_month_revenue)
+        ),
         "order_growth": growth_pct(float(this_month_orders), float(prev_month_orders)),
         "top_products": top_products,
         "sales_by_day": sales_by_day,
