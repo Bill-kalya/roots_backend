@@ -3682,3 +3682,18 @@
 {"message": "Expired 0 old carts", "timestamp": "2026-06-20T08:00:37.109741", "level": "INFO", "logger": "app.services.cart_service", "service": "roots-backend"}
 {"message": "Expired 0 old carts", "timestamp": "2026-06-20T09:00:37.179351", "level": "INFO", "logger": "app.services.cart_service", "service": "roots-backend"}
 {"message": "Expired 0 old carts", "timestamp": "2026-06-20T10:00:37.212195", "level": "INFO", "logger": "app.services.cart_service", "service": "roots-backend"}
+{"message": "Static /uploads mounted from: C:\\Users\\kalya\\projects\\roots_backend\\uploads", "timestamp": "2026-06-23T12:25:36.462629", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Starting Roots Backend - Enterprise Edition with RBAC", "timestamp": "2026-06-23T12:25:37.499326", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "\ud83d\ude80 Running database migrations...", "timestamp": "2026-06-23T12:25:37.566350", "level": "INFO", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "\u274c Migration failed", "timestamp": "2026-06-23T12:25:46.762285", "level": "ERROR", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "FAILED: Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads\n", "timestamp": "2026-06-23T12:25:46.763102", "level": "ERROR", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "", "timestamp": "2026-06-23T12:25:46.763755", "level": "ERROR", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "Continuing startup despite migration failure (set FAIL_ON_MIGRATION_ERROR=true to fail hard)", "timestamp": "2026-06-23T12:25:46.764242", "level": "WARNING", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "Enterprise database connections initialized", "timestamp": "2026-06-23T12:25:46.900950", "level": "INFO", "logger": "app.db.session", "service": "roots-backend"}
+{"message": "Redis connection initialized successfully", "timestamp": "2026-06-23T12:25:47.001511", "level": "INFO", "logger": "app.cache.redis_manager", "service": "roots-backend"}
+{"message": "System health monitor started (interval: 60s)", "timestamp": "2026-06-23T12:25:47.006055", "level": "INFO", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u2705 All services initialized in 12.67s", "timestamp": "2026-06-23T12:25:50.172381", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Received shutdown signal, starting graceful shutdown...", "timestamp": "2026-06-23T12:31:55.046064", "level": "INFO", "logger": "app.main", "service": "roots-backend"}
+{"message": "Expired 0 old carts", "timestamp": "2026-06-23T13:25:47.060533", "level": "INFO", "logger": "app.services.cart_service", "service": "roots-backend"}
+{"message": "Expired 0 old carts", "timestamp": "2026-06-23T14:25:47.068534", "level": "INFO", "logger": "app.services.cart_service", "service": "roots-backend"}
+{"message": "Expired 0 old carts", "timestamp": "2026-06-23T18:04:18.096274", "level": "INFO", "logger": "app.services.cart_service", "service": "roots-backend"}

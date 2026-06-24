@@ -460,3 +460,6 @@
 {"message": "Alert [critical][database]: Database Connection Failed \u2014 Cannot connect to the primary database", "timestamp": "2026-06-16T18:31:27.877708", "level": "CRITICAL", "logger": "app.monitoring.alerts", "service": "roots-backend"}
 {"message": "Write engine health check failed: ", "timestamp": "2026-06-16T18:32:47.147932", "level": "ERROR", "logger": "app.db.session", "service": "roots-backend"}
 {"message": "Alert [critical][database]: Database Connection Failed \u2014 Cannot connect to the primary database", "timestamp": "2026-06-16T18:32:48.334646", "level": "CRITICAL", "logger": "app.monitoring.alerts", "service": "roots-backend"}
+{"message": "\u274c Migration failed", "timestamp": "2026-06-23T12:25:46.761521", "level": "ERROR", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "FAILED: Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads\n", "timestamp": "2026-06-23T12:25:46.762928", "level": "ERROR", "logger": "app.db.migrate", "service": "roots-backend"}
+{"message": "", "timestamp": "2026-06-23T12:25:46.763603", "level": "ERROR", "logger": "app.db.migrate", "service": "roots-backend"}
