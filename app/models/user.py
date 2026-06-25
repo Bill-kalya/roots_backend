@@ -41,6 +41,9 @@ class User(Base, TimestampMixin):
     mfa_enabled = Column(Boolean, default=False)
     mfa_secret = Column(String(255), nullable=True)
     
+    # Trusted devices for MFA skip
+    trusted_devices = Column(JSON, nullable=True, default=list)
+
     # Session management
     last_login = Column(DateTime, nullable=True)
     last_login_ip = Column(String(45), nullable=True)

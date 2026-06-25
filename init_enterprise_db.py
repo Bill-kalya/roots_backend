@@ -119,11 +119,11 @@ async def insert_sample_data():
 
         await conn.execute(text("""
             INSERT INTO users (
-                id, email, hashed_password, full_name, is_admin, is_verified,
+                id, email, hashed_password, full_name, role, is_verified,
                 is_active, created_at
             ) VALUES (
                 uuid_generate_v4(), 'admin@roots.com', :password, 'System Administrator',
-                true, true, true, NOW()
+                'ADMIN', true, true, NOW()
             ) ON CONFLICT (email) DO NOTHING
         """), {"password": admin_password_hash})
         logger.info("  ✅ Admin user created (email: admin@roots.com, password: Admin123!)")

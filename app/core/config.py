@@ -117,6 +117,14 @@ class Settings(BaseSettings):
     SMTP_USER: str = ""
     SMTP_PASSWORD: str = ""
     EMAIL_FROM: str = ""
+    SMTP_FROM: Optional[str] = None  # fallback to EMAIL_FROM if not set
+
+    @field_validator("SMTP_FROM", mode="before")
+    @classmethod
+    def fallback_smtp_from(cls, v, info):
+        if v is None or not v:
+            return info.data.get("EMAIL_FROM", "")
+        return v
 
     # Frontend URL used to build verify links
     FRONTEND_URL: str = "http://localhost:5173"

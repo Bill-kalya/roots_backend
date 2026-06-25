@@ -22,7 +22,7 @@ class EmailService:
         self.smtp_port = settings.SMTP_PORT
         self.smtp_user = settings.SMTP_USER
         self.smtp_password = settings.SMTP_PASSWORD
-        self.from_email = settings.SMTP_FROM
+        self.from_email = getattr(settings, 'SMTP_FROM', None) or settings.EMAIL_FROM
     
     @with_retry("email")
     async def send_email(
@@ -86,7 +86,7 @@ def send_welcome_email(self, user_id: str, email: str, name: str):
         context = {
             "name": name,
             "login_url": "https://roots.com/login",
-            "support_email": settings.SMTP_FROM
+            "support_email": getattr(settings, 'SMTP_FROM', None) or settings.EMAIL_FROM
         }
         
         import asyncio
