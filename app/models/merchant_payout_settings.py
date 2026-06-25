@@ -23,8 +23,12 @@ class MerchantPayoutSettings(Base, TimestampMixin):
     payout_method = Column(String(30), nullable=False)
 
     mpesa_phone = Column(String(20), nullable=True)
+    mpesa_mode = Column(String(10), nullable=False, server_default="PHONE")
+    mpesa_till_number = Column(String(20), nullable=True)
+    pochi_phone = Column(String(15), nullable=True)
     paypal_email = Column(String(255), nullable=True)
     stripe_account_id = Column(String(255), nullable=True)
+
 
     is_verified = Column(Boolean, default=False, nullable=False)
 

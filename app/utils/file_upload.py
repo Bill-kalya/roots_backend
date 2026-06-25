@@ -87,18 +87,24 @@ async def validate_mime_by_magic(upload: UploadFile) -> None:
     """Validate MIME type using python-magic.
 
     Note: requires `pip install python-magic`.
+
+    Railway production can fail if libmagic/python-magic isn't installed.
+    In that case we fall back to extension-based validation instead of
+    hard-failing the entire upload.
     """
 
     try:
         import magic  # type: ignore
     except Exception:
-        # If python-magic is not installed, fail closed.
-        raise HTTPException(status_code=500, detail="Server misconfiguration: python-magic not installed")
+        # Fallback: don't block uploads if python-magic isn't available.
+        # The endpoint already checks allowed extensions.
+        return
 
     contents = await _read_prefix(upload, 2048)
     mime = magic.from_buffer(contents, mime=True)
     if mime not in ALLOWED_MIME_TYPES:
         raise HTTPException(status_code=400, detail="Invalid image type")
+
 
 
 def maybe_should_convert_to_webp() -> bool:

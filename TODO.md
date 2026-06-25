@@ -1,14 +1,11 @@
-# Task TODO (blackboxai)
+# TODO (blackboxai)
 
-## MPESA + Receipts Integrity Fix (priority)
-- [x] Create task TODO scaffold
-- [x] Fix MPESA callback PaymentStatus comparisons (string vs Enum).
-- [x] Standardize MPESA amount reconciliation using Decimal.
-- [x] Generate signed Receipt after MPESA callback confirms order payment.
-- [x] Make Receipt generation endpoint safe (restrict POST /generate).
-- [x] Ensure callback persists Payment updates even if receipt generation errors (receipt should be idempotent/retriable).
-
-
-## After MPESA passes
-- [ ] Run quick sanity checks by starting server and hitting stk-push/callback/receipt verify endpoints.
+- [ ] Create Alembic migration to add `pochi_phone` column to `merchant_payout_settings`.
+- [ ] Update SQLAlchemy model `MerchantPayoutSettings` to include `pochi_phone`.
+- [ ] Update Pydantic schema `MerchantPayoutSettingsResponse` and `MerchantPayoutSettingsUpdateRequest` to support `mpesa_mode=POCHI` and `pochi_phone` validation.
+- [ ] Update route `app/api/routes/merchant/payout_settings.py` to read/write `pochi_phone` based on selected `mpesa_mode`.
+- [ ] Search for frontend `MerchantPayoutSettings.jsx` and update it to allow selecting `POCHI` and sending `pochi_phone`.
+- [ ] Locate Daraja disbursement/payout execution code and branch by `mpesa_mode` (PHONE/TILL/POCHI).
+- [ ] Run formatting/lint/tests if available.
+- [ ] Run a quick smoke test via API calls for all 3 MPESA modes.
 

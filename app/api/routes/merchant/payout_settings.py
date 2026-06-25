@@ -2,6 +2,7 @@ import re
 from typing import Optional
 from uuid import UUID
 
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -15,6 +16,19 @@ from app.schemas.merchant_payout_settings import (
     MerchantPayoutSettingsUpdateRequest,
     MerchantEarningsResponse,
 )
+
+
+
+
+def _normalize_mpesa_mode(mode: Optional[str]) -> str:
+    # Default to PHONE for backward-compatibility.
+    if mode == "TILL":
+        return "TILL"
+    if mode == "POCHI":
+        return "POCHI"
+    return "PHONE"
+
+
 
 
 router = APIRouter(tags=["Merchant - Payout Settings"])
@@ -48,6 +62,7 @@ async def get_payout_settings(
     current_user: User = Depends(require_merchant),
     db: AsyncSession = Depends(get_db),
 ):
+
     stmt = select(MerchantPayoutSettings).where(MerchantPayoutSettings.merchant_id == current_user.id)
     result = await db.execute(stmt)
     settings_obj: Optional[MerchantPayoutSettings] = result.scalar_one_or_none()
@@ -56,18 +71,26 @@ async def get_payout_settings(
         # Default settings record (not persisted) for new merchants.
         return MerchantPayoutSettingsResponse(
             payout_method=MerchantPayoutMethod.MPESA.value,
+            mpesa_mode="PHONE",
             mpesa_phone=None,
+            mpesa_till_number=None,
+            pochi_phone=None,
             paypal_email=None,
             stripe_account_id=None,
             is_verified=False,
             supported_methods=_SUPPORTED_METHODS,
         )
 
+
     return MerchantPayoutSettingsResponse(
         payout_method=settings_obj.payout_method,  # type: ignore[arg-type]
+        mpesa_mode=getattr(settings_obj, "mpesa_mode", "PHONE"),
         mpesa_phone=settings_obj.mpesa_phone,
+        mpesa_till_number=getattr(settings_obj, "mpesa_till_number", None),
+        pochi_phone=getattr(settings_obj, "pochi_phone", None),
         paypal_email=settings_obj.paypal_email,
         stripe_account_id=settings_obj.stripe_account_id,
+
         is_verified=settings_obj.is_verified,
         supported_methods=_SUPPORTED_METHODS,
     )
@@ -79,6 +102,7 @@ async def update_payout_settings(
     current_user: User = Depends(require_merchant),
     db: AsyncSession = Depends(get_db),
 ):
+
     if payload.payout_method not in _SUPPORTED_METHODS:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -89,13 +113,64 @@ async def update_payout_settings(
     # This must be revisited once payout processing state exists.
 
     normalized_phone: Optional[str] = None
+    normalized_till: Optional[str] = None
+
     # Validate method-specific required fields
     if payload.payout_method == MerchantPayoutMethod.MPESA.value:
-        try:
-            # mpesa_phone is required when selecting MPESA
-            normalized_phone = _normalize_phone(payload.mpesa_phone)
-        except ValueError as exc:
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
+        mpesa_mode = _normalize_mpesa_mode(payload.mpesa_mode)
+
+        if mpesa_mode == "PHONE":
+            try:
+                # mpesa_phone is required when mpesa_mode=PHONE
+                normalized_phone = _normalize_phone(payload.mpesa_phone)
+            except ValueError as exc:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=str(exc),
+                )
+
+        elif mpesa_mode == "TILL":
+            # mpesa_till_number is required when mpesa_mode=TILL
+            if not payload.mpesa_till_number or not str(payload.mpesa_till_number).strip():
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="mpesa_till_number is required when mpesa_mode is TILL",
+                )
+
+            normalized_till = str(payload.mpesa_till_number).strip()
+            if not normalized_till.isdigit() or not (5 <= len(normalized_till) <= 10):
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="Till number must be 5-10 digits",
+                )
+
+        elif mpesa_mode == "POCHI":
+            # pochi_phone is required when mpesa_mode=POCHI
+            normalized_phone = None
+            if not getattr(payload, "pochi_phone", None) or not str(payload.pochi_phone).strip():
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="pochi_phone is required when mpesa_mode is POCHI",
+                )
+            try:
+                normalized_phone = _normalize_phone(payload.pochi_phone)
+            except ValueError as exc:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=str(exc),
+                )
+
+        # Enforce pick-one at API layer as well, for clear errors.
+        provided_phone = bool(payload.mpesa_phone and str(payload.mpesa_phone).strip())
+        provided_till = bool(payload.mpesa_till_number and str(payload.mpesa_till_number).strip())
+        provided_pochi = bool(getattr(payload, "pochi_phone", None) and str(payload.pochi_phone).strip())
+        if sum([provided_phone, provided_till, provided_pochi]) > 1:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Provide only one of mpesa_phone, mpesa_till_number, or pochi_phone",
+            )
+
+
     elif payload.payout_method == MerchantPayoutMethod.PAYPAL.value:
         if not getattr(payload, "paypal_email", None):
             raise HTTPException(
@@ -115,14 +190,25 @@ async def update_payout_settings(
 
     if not settings_obj:
         # New settings record: populate fields according to selected method
+        mpesa_mode_db: Optional[str] = None
+        mpesa_till_db: Optional[str] = None
+
+        if payload.payout_method == MerchantPayoutMethod.MPESA.value:
+            mpesa_mode_db = _normalize_mpesa_mode(payload.mpesa_mode)
+            mpesa_till_db = normalized_till
+
         settings_obj = MerchantPayoutSettings(
             merchant_id=current_user.id,
             payout_method=payload.payout_method,
-            mpesa_phone=normalized_phone if payload.payout_method == MerchantPayoutMethod.MPESA.value else None,
+            mpesa_phone=normalized_phone if payload.payout_method == MerchantPayoutMethod.MPESA.value and (mpesa_mode_db or "PHONE") == "PHONE" else None,
+            mpesa_mode=mpesa_mode_db or "PHONE",
+            mpesa_till_number=mpesa_till_db if (mpesa_mode_db or "PHONE") == "TILL" else None,
+            pochi_phone=normalized_phone if payload.payout_method == MerchantPayoutMethod.MPESA.value and (mpesa_mode_db or "PHONE") == "POCHI" else None,
             paypal_email=payload.paypal_email if payload.payout_method == MerchantPayoutMethod.PAYPAL.value else None,
             stripe_account_id=payload.stripe_account_id if payload.payout_method == MerchantPayoutMethod.STRIPE.value else None,
             is_verified=False,
         )
+
         db.add(settings_obj)
     else:
         # Update fields according to selected method. Only MPESA requires a phone.
@@ -132,15 +218,24 @@ async def update_payout_settings(
 
         settings_obj.payout_method = payload.payout_method
         if payload.payout_method == MerchantPayoutMethod.MPESA.value:
-            settings_obj.mpesa_phone = normalized_phone
+            mpesa_mode_db = _normalize_mpesa_mode(payload.mpesa_mode)
+            settings_obj.mpesa_mode = mpesa_mode_db
+            settings_obj.mpesa_phone = normalized_phone if mpesa_mode_db == "PHONE" else None
+            settings_obj.mpesa_till_number = normalized_till if mpesa_mode_db == "TILL" else None
+            settings_obj.pochi_phone = normalized_phone if mpesa_mode_db == "POCHI" else None
             settings_obj.paypal_email = None
             settings_obj.stripe_account_id = None
+
         elif payload.payout_method == MerchantPayoutMethod.PAYPAL.value:
             settings_obj.mpesa_phone = None
+            settings_obj.mpesa_till_number = None
+            settings_obj.pochi_phone = None
             settings_obj.paypal_email = payload.paypal_email
             settings_obj.stripe_account_id = None
         elif payload.payout_method == MerchantPayoutMethod.STRIPE.value:
             settings_obj.mpesa_phone = None
+            settings_obj.mpesa_till_number = None
+            settings_obj.pochi_phone = None
             settings_obj.paypal_email = None
             settings_obj.stripe_account_id = payload.stripe_account_id
         # Keep is_verified as-is for now (backend verification flow may be async later).
