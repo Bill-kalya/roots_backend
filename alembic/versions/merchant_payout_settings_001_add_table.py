@@ -5,7 +5,7 @@ import uuid
 
 # revision identifiers, used by Alembic.
 revision = "merchant_payout_settings_001"
-down_revision = None
+down_revision = "3b7c5c7d9f42"
 branch_labels = None
 depends_on = None
 
