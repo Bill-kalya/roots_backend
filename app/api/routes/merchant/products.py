@@ -46,8 +46,6 @@ def _parse_json_array(v: Optional[str]) -> list[str]:
 
 
 
-@router.post("", response_model=ProductResponse, status_code=status.HTTP_201_CREATED)
-@router.post("/", response_model=ProductResponse, status_code=status.HTTP_201_CREATED)
 def _parse_int_form(v: Optional[str], field_name: str, *, required: bool = True, default: Optional[int] = None) -> Optional[int]:
     if v is None:
         if required:
@@ -101,6 +99,11 @@ async def create_product(
     db: AsyncSession = Depends(get_db),
 ):
     """Create a new product (Merchant only)."""
+
+    import logging
+
+    logger = logging.getLogger(__name__)
+    logger.info("Entered create_product")
 
     await validate_upload_file(image)
     filename = await save_upload_image(image)
