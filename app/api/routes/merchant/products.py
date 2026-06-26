@@ -6,9 +6,8 @@ from uuid import UUID, uuid4
 from pathlib import Path
 import os
 
-from urllib.parse import quote
-
 from app.db.session import get_db
+
 from app.core.dependencies import require_merchant
 from app.models.user import User
 from app.models.product import Product
@@ -106,8 +105,8 @@ async def create_product(
     logger.info("Entered create_product")
 
     await validate_upload_file(image)
-    filename = await save_upload_image(image)
-    image_url = f"{settings.PUBLIC_API_BASE_URL}/uploads/{quote(filename)}"
+    image_url = await save_upload_image(image)
+
 
     parsed_materials = _parse_json_array(materials)
     parsed_gallery = _parse_json_array(gallery)

@@ -1,27 +1,19 @@
 from __future__ import annotations
 
-from pathlib import Path
-from uuid import uuid4
+import asyncio
 import re
-from typing import Optional
-
 from io import BytesIO
+from pathlib import Path
+from typing import Optional
+from uuid import uuid4
+
+from fastapi import HTTPException, UploadFile
+
+from app.core.config import settings
 
 
-from fastapi import UploadFile, HTTPException
-
-# Local directory served by FastAPI at /uploads
-UPLOADS_DIR = Path("uploads")
-UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
-
-# Keep extensions consistent for StaticFiles and future CDN
-ALLOWED_EXTENSIONS = {
-    ".jpg",
-    ".jpeg",
-    ".png",
-    ".webp",
-    ".gif",
-}
+# Keep extensions consistent for future CDN / transformations
+ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
 
 ALLOWED_MIME_TYPES = {
     "image/jpeg",
@@ -40,7 +32,6 @@ _NON_SAFE_CHARS_RE = re.compile(r"[^a-zA-Z0-9._-]")
 def sanitize_filename(filename: str) -> str:
     filename = (filename or "").strip()
     filename = _NON_SAFE_CHARS_RE.sub("_", filename)
-    # Collapse multiple dots/spaces artifacts
     filename = filename.strip(".")
     return filename or "file"
 
@@ -56,11 +47,6 @@ def _get_extension(original_filename: str) -> str:
 def generate_safe_filename(original_filename: str) -> str:
     ext = _get_extension(original_filename)
     return f"{uuid4().hex}{ext}"
-
-
-def build_upload_url(filename: str) -> str:
-    """Central place to build frontend-consumed relative URL."""
-    return f"/uploads/{filename}" 
 
 
 async def validate_upload_file(
@@ -86,18 +72,12 @@ async def _read_prefix(upload: UploadFile, n: int = 2048) -> bytes:
 async def validate_mime_by_magic(upload: UploadFile) -> None:
     """Validate MIME type using python-magic.
 
-    Note: requires `pip install python-magic`.
-
-    Railway production can fail if libmagic/python-magic isn't installed.
-    In that case we fall back to extension-based validation instead of
-    hard-failing the entire upload.
+    If python-magic/libmagic isn't installed, we fall back (do not block uploads).
     """
 
     try:
         import magic  # type: ignore
     except Exception:
-        # Fallback: don't block uploads if python-magic isn't available.
-        # The endpoint already checks allowed extensions.
         return
 
     contents = await _read_prefix(upload, 2048)
@@ -106,10 +86,8 @@ async def validate_mime_by_magic(upload: UploadFile) -> None:
         raise HTTPException(status_code=400, detail="Invalid image type")
 
 
-
 def maybe_should_convert_to_webp() -> bool:
-    # Default: convert everything to webp for performance + CDN friendliness.
-    # Can be overridden by env.
+    # Default: true (we still let Cloudinary transform to webp if possible)
     import os
 
     return os.getenv("UPLOAD_CONVERT_TO_WEBP", "true").lower() in {"1", "true", "yes"}
@@ -117,57 +95,75 @@ def maybe_should_convert_to_webp() -> bool:
 
 async def save_upload_image(
     upload: UploadFile,
+
     *,
     convert_to_webp: Optional[bool] = None,
 ) -> str:
-    """Save an upload to the filesystem with a safe, unique filename.
+    """Upload an image to Cloudinary and return a full URL.
 
-    Returns:
-        filename only (NOT a full URL). Example: <uuid>.webp
+    Behavior change:
+    - previously: returned filename like <uuid>.webp
+    - now: returns Cloudinary URL like https://res.cloudinary.com/.../image.jpg
     """
 
-    # Validate basic constraints
     if convert_to_webp is None:
         convert_to_webp = maybe_should_convert_to_webp()
 
-    # Hard validation: extension first, then MIME by magic.
-    # (We still do extension checks because clients often send .jpg/.png, but we do not trust it alone.)
-    safe_ext = _get_extension(upload.filename)
-
+    # Hard validation: extension then MIME by magic (if available)
+    _get_extension(upload.filename)
     await validate_mime_by_magic(upload)
 
-    UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+    # Read bytes once (Cloudinary SDK upload is blocking, so we read in async)
+    data = await upload.read()
+    await upload.seek(0)
 
-    if convert_to_webp:
-        try:
-            from PIL import Image  # type: ignore
-        except Exception:
-            raise HTTPException(status_code=500, detail="Server misconfiguration: pillow not installed")
+    def _do_upload() -> str:
+        import cloudinary
+        import cloudinary.uploader
 
-        # Convert using PIL
-        # Read all bytes into memory for Pillow.
-        data = await upload.read()
-        await upload.seek(0)
-        image = Image.open(BytesIO(data))  # type: ignore[name-defined]
-        # Normalize channels: convert paletted images to RGB(A)
-        image = image.convert("RGBA") if image.mode in {"P", "RGBA"} else image.convert("RGB")
+        # Configure once per process
+        cloudinary.config(
+            cloud_name=settings.CLOUDINARY_CLOUD_NAME,
+            api_key=settings.CLOUDINARY_API_KEY,
+            api_secret=settings.CLOUDINARY_API_SECRET,
+            secure=True,
+        )
 
-        webp_filename = f"{uuid4().hex}.webp"
-        out_path = UPLOADS_DIR / webp_filename
-        image.save(out_path, "WEBP", quality=85, method=6)
-        return webp_filename
 
-    # No conversion: preserve extension, but unique name.
-    filename = generate_safe_filename(upload.filename)
-    file_path = UPLOADS_DIR / filename
+        filename = generate_safe_filename(upload.filename)
+        public_id = Path(filename).stem
 
-    # Save as bytes (no original name stored)
-    # Stream to disk in chunks for large files.
-    import shutil
-    with file_path.open("wb") as buffer:
-        # Ensure we start from beginning
-        await upload.seek(0)
-        shutil.copyfileobj(upload.file, buffer)
+        upload_options: dict = {
+            "public_id": public_id,
+            "resource_type": "image",
+            "overwrite": True,
+        }
 
-    return filename
+        # Quality control + optional forced webp
+        # Cloudinary will handle the conversion; we don't do Pillow here.
+        if convert_to_webp:
+            upload_options["format"] = "webp"
+            upload_options["quality"] = 85
+
+        # Cloudinary accepts file-like objects
+        upload_result = cloudinary.uploader.upload(
+            BytesIO(data),
+            **upload_options,
+        )
+
+        # The SDK returns metadata incl. secure_url
+        res = upload_result
+
+
+        secure_url = res.get("secure_url")
+        if not secure_url:
+            raise HTTPException(status_code=500, detail="Cloudinary upload did not return a URL")
+        return secure_url
+
+    try:
+        return await asyncio.to_thread(_do_upload)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Could not upload image: {e}")
 

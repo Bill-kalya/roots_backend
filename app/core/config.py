@@ -171,7 +171,16 @@ class Settings(BaseSettings):
 
     # =========================================================================
 
+    # CLOUDINARY — Image storage/CDN
+    # =========================================================================
+    CLOUDINARY_CLOUD_NAME: str
+    CLOUDINARY_API_KEY: str
+    CLOUDINARY_API_SECRET: str
+
+    # =========================================================================
+
     # EMAIL (Resend)
+
     # =========================================================================
     RESEND_API_KEY: str = ""
     # If empty, we fall back to EMAIL_FROM
