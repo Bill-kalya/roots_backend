@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, or_
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 from typing import Optional, Tuple, List
 from app.models.product import Product
 from app.schemas.product import ProductListResponse, ProductResponse
@@ -15,7 +15,11 @@ class ProductService:
         params: PaginationParams
     ) -> Tuple[List[Product], int]:
         """Get products with filtering and pagination"""
-        query = select(Product).where(Product.is_active == True)
+        query = (
+            select(Product)
+            .options(selectinload(Product.merchant))
+            .where(Product.is_active == True)
+        )
         
         # Apply filters
         if params.search:

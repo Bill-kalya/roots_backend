@@ -23,7 +23,7 @@ class Product(Base, TimestampMixin):
         "User",
         foreign_keys=[merchant_id],
         back_populates="products",
-        lazy="select",
+        lazy="selectin",
     )
 
     name = Column(String(255), nullable=False)

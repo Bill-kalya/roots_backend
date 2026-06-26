@@ -225,8 +225,7 @@ async def update_merchant_product(
 
     if image is not None:
         await validate_upload_file(image)
-        filename = await save_upload_image(image)
-        product.image_url = f"{settings.PUBLIC_API_BASE_URL}/uploads/{quote(filename)}"
+        product.image_url = await save_upload_image(image)
 
     await db.commit()
     await db.refresh(product)
