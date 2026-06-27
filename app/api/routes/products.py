@@ -12,30 +12,35 @@ import re
 
 
 def _normalize_image_url(image_url: str) -> str:
-    """Normalize image_url to the frontend-required form: /uploads/<file>.
+    """Normalize image_url for the frontend.
 
-    Strips any scheme/host (e.g. http://.../uploads/x.jpg) and ensures we
-    never return /api/uploads/... style paths.
+    - Cloudinary URLs should be returned untouched.
+    - Legacy local URLs should be normalized to /uploads/<file>.
     """
     if not image_url:
-        return "/uploads/"
+        return ""
 
-    # Strip scheme/host if present
-    image_url = re.sub(r"^https?://[^/]+", "", image_url)
+    # ✅ Cloudinary URLs — return as-is
+    if image_url.startswith("https://res.cloudinary.com"):
+        return image_url
 
-    # Remove any leading /api prefix
-    image_url = re.sub(r"^/api/", "/", image_url)
+
+
+
+    # Legacy local paths — keep old logic for backward compat
+    image_url = re.sub(r"^https?://[^/]+", "", image_url)  # strip scheme/host
+    image_url = re.sub(r"^/api/", "/", image_url)  # remove any leading /api prefix
 
     # Ensure it starts with /uploads/
     if "/uploads/" in image_url:
         image_url = image_url.split("/uploads/", 1)[1]
         image_url = f"/uploads/{image_url}"
     elif not image_url.startswith("/uploads/"):
-        # Best-effort fallback: keep only the basename
         basename = image_url.rsplit("/", 1)[-1]
         image_url = f"/uploads/{basename}"
 
     return image_url
+
 
 
 def _normalize_product_for_ui(p: dict) -> dict:
