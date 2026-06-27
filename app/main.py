@@ -398,6 +398,11 @@ app.include_router(paypal_routes, prefix="/api/payments/paypal", tags=["PayPal"]
 
 app.include_router(chat_router)
 
+# ============ Conversations (REST) ============
+# Mount conversations endpoints (e.g. POST /conversations/resolve-room)
+app.include_router(conversations_router)
+
+
 # ============ Orders (Create) ============
 # Public create-order endpoint for checkout flow.
 # Uses app/api/routes/orders.py where create_order is mounted at @router.post("/" ).

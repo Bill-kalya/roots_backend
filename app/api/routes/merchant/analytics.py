@@ -84,7 +84,16 @@ async def merchant_analytics_dashboard(
         .limit(5)
     )
 
+    total_sales_stmt = (
+        select(func.coalesce(func.sum(OrderItem.quantity), 0))
+        .select_from(Order)
+        .join(OrderItem, OrderItem.order_id == Order.id)
+        .join(Product, Product.id == OrderItem.product_id)
+        .where(Product.merchant_id == current_user.id)
+    )
+
     revenue = (await db.execute(revenue_stmt)).scalar_one()
+    total_sales = (await db.execute(total_sales_stmt)).scalar_one()
     total_orders = (await db.execute(total_orders_stmt)).scalar_one()
     active_products = (await db.execute(active_products_stmt)).scalar_one()
 
@@ -96,7 +105,7 @@ async def merchant_analytics_dashboard(
     revenue_chart: Dict[str, Any] = {}
 
     return {
-        "totalSales": float(revenue),
+        "totalSales": int(total_sales),
         "totalOrders": int(total_orders),
         "totalRevenue": float(revenue),
         "activeProducts": int(active_products),
