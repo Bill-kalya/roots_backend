@@ -1,5 +1,7 @@
 # TODO
 
-- [x] Create Alembic migration to restore `users.trusted_devices` column (a6f6154ec010_restore_trusted_devices_column.py)
-- [x] Run `alembic upgrade head`
+- [x] Inspect `Order` model and identify `Enum(OrderStatus)` binding behavior.
+- [x] Fix SQLAlchemy enum binding to use `.value` (lowercase Postgres enum labels) via `values_callable`.
+- [ ] Restart app / redeploy.
+- [ ] Create a test order and verify `orders.status` stores lowercase labels in Postgres.
 

@@ -19,11 +19,18 @@ class Order(Base, TimestampMixin):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
 
-    status = Column(Enum(OrderStatus), default=OrderStatus.PENDING)
+    # IMPORTANT: bind enum values using the DB enum labels (case-sensitive).
+    # Without values_callable, SQLAlchemy defaults to using the enum member .name (e.g. "PENDING")
+    # which doesn't match Postgres enum labels (e.g. "pending").
+    status = Column(
+        Enum(OrderStatus, values_callable=lambda obj: [e.value for e in obj]),
+        default=OrderStatus.PENDING,
+    )
 
     subtotal = Column(Numeric(10, 2), nullable=False)
     shipping_fee = Column(Numeric(10, 2), default=0)
     total = Column(Numeric(10, 2), nullable=False)
+
 
     # Payment fields (populated only by provider webhooks)
     payment_provider = Column(String(50), nullable=True)  # mpesa | paypal
