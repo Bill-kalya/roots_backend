@@ -134,27 +134,25 @@ async def chat_ws(
 
     # Resolve conversation/merchant for UI
     async with get_db() as db:
-        conv_stmt = (
-            select(Conversation)
-            .where(Conversation.room_id == room_id)
-        )
+        conv_stmt = select(Conversation).where(Conversation.room_id == room_id)
         conv = (await db.execute(conv_stmt)).scalar_one_or_none()
-
 
         merchant_user_stmt = select(User).where(User.id == merchant_id)
         merchant_user = (await db.execute(merchant_user_stmt)).scalar_one_or_none()
 
+
         # Load last 50 messages
-        history_stmt = (
-            select(Message)
-            .where(Message.conversation_id == conv.id if conv else None)
-            .order_by(Message.created_at.desc())
-            .limit(50)
-        )
-        history_msgs = []
+        history_msgs: list[Message] = []
         if conv:
+            history_stmt = (
+                select(Message)
+                .where(Message.conversation_id == conv.id)
+                .order_by(Message.created_at.desc())
+                .limit(50)
+            )
             history_msgs = (await db.execute(history_stmt)).scalars().all()
         history_msgs = list(reversed(history_msgs))
+
 
     merchant_payload = {
         "name": getattr(merchant_user, "store_name", None) or getattr(merchant_user, "full_name", None) or "Merchant",
