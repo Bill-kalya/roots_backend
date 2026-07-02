@@ -370,6 +370,14 @@ class Settings(BaseSettings):
     STRIPE_WEBHOOK_SECRET: Optional[str] = None
     STRIPE_CURRENCY: str = "usd"
 
+    # =========================================================================
+    # PAYPAL — Payments
+    # =========================================================================
+    PAYPAL_CLIENT_ID: Optional[str] = None
+    PAYPAL_CLIENT_SECRET: Optional[str] = None
+    PAYPAL_BASE_URL: str = "https://api-m.sandbox.paypal.com"
+    PAYPAL_WEBHOOK_ID: Optional[str] = None
+
     @model_validator(mode="after")
     def stripe_safety_checks(self) -> "Settings":
         """Stripe configuration.

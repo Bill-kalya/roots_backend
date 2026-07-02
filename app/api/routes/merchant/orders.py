@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, distinct
 from uuid import UUID
@@ -9,6 +9,9 @@ from app.db.session import get_db
 from app.models.user import User
 from app.models.order import Order, OrderItem
 
+import logging
+
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -110,17 +113,28 @@ async def get_merchant_orders(
 @router.put("/{order_id}/status")
 async def update_order_status(
     order_id: str,
+    request: Request,
     current_user: User = Depends(require_merchant),
     db: AsyncSession = Depends(get_db),
+    new_status_str: str = Query("SHIPPED", alias="status"),
 ):
-    """Update order status.
-
-    NOTE: Until merchant ownership per order is implemented, this updates the status globally.
-    """
+    """Update order status. When status=DELIVERED, escrowed funds are released to merchant."""
     from app.models.order import OrderStatus
 
-    # Default to SHIPPED for backward compatibility with placeholder endpoint.
-    new_status = OrderStatus.SHIPPED
+    try:
+        new_status = OrderStatus(new_status_str.lower())
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Invalid status: {new_status_str}. Must be one of: shipped, delivered, cancelled",
+        )
+
+    valid_transitions = {OrderStatus.SHIPPED, OrderStatus.DELIVERED, OrderStatus.CANCELLED}
+    if new_status not in valid_transitions:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Cannot transition to {new_status_str}. Allowed: shipped, delivered, cancelled",
+        )
 
     try:
         order_uuid = UUID(order_id)
@@ -134,7 +148,59 @@ async def update_order_status(
     if not order:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
 
+    # Verify merchant owns at least one product in the order
+    from app.models.product import Product
+    ownership_stmt = (
+        select(OrderItem.id)
+        .join(Product, Product.id == OrderItem.product_id)
+        .where(OrderItem.order_id == order.id, Product.merchant_id == current_user.id)
+        .limit(1)
+    )
+    ownership_result = await db.execute(ownership_stmt)
+    if not ownership_result.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not own any products in this order",
+        )
+
     order.status = new_status
+
+    # Release escrow on delivery confirmation
+    if new_status == OrderStatus.DELIVERED:
+        from app.services.wallet_service import WalletService
+        from decimal import Decimal
+        from app.models.order import OrderItem
+        from app.models.product import Product
+
+        items_stmt = select(OrderItem).where(OrderItem.order_id == order.id)
+        items_res = await db.execute(items_stmt)
+        items = items_res.scalars().all()
+
+        merchant_shares: dict[UUID, Decimal] = {}
+        for item in items:
+            product = await db.get(Product, item.product_id)
+            if not product or not product.merchant_id:
+                continue
+            share = merchant_shares.get(product.merchant_id, Decimal("0.00"))
+            share += item.price_snapshot * item.quantity
+            merchant_shares[product.merchant_id] = share
+
+        ws = WalletService(db)
+        client_ip = request.headers.get("X-Forwarded-For", request.client.host if request.client else None)
+        for merchant_id, amount in merchant_shares.items():
+            try:
+                await ws.release_to_available(merchant_id, amount, order.id, actor_id=current_user.id, ip_address=client_ip)
+            except ValueError as e:
+                logger.warning("Escrow release failed for merchant %s on order %s: %s", merchant_id, order.id, e)
+
+    elif new_status == OrderStatus.CANCELLED:
+        from app.models.payment import Payment, PaymentStatus
+        payment_stmt = select(Payment).where(Payment.order_id == order.id, Payment.status == PaymentStatus.COMPLETED.value)
+        payment_res = await db.execute(payment_stmt)
+        payment = payment_res.scalar_one_or_none()
+        if payment:
+            payment.status = PaymentStatus.CANCELLED.value
+
     await db.commit()
     await db.refresh(order)
 

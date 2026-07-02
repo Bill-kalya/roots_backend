@@ -252,11 +252,12 @@ async def get_merchant_earnings(
     current_user: User = Depends(require_merchant),
     db: AsyncSession = Depends(get_db),
 ):
-    # Current repo does not have a payout/ledger/batch model.
-    # For Phase 1, return safe defaults (so frontend contract exists and can be wired).
+    from app.services.wallet_service import WalletService
+    ws = WalletService(db)
+    wallet = await ws.get_wallet(current_user.id)
     return MerchantEarningsResponse(
-        available_balance=0.0,
-        pending_balance=0.0,
-        currency="KES",
+        available_balance=float(wallet.available_balance),
+        pending_balance=float(wallet.pending_balance),
+        currency=wallet.currency,
     )
 

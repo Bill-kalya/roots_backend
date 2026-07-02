@@ -1,6 +1,7 @@
 import subprocess
 import logging
 import os
+import sys
 
 
 logger = logging.getLogger(__name__)
@@ -11,7 +12,7 @@ def run_migrations():
         logger.info("🚀 Running database migrations...")
 
         result = subprocess.run(
-            ["alembic", "upgrade", "head"],
+            [sys.executable, "-m", "alembic", "upgrade", "head"],
             check=True,
             capture_output=True,
             text=True

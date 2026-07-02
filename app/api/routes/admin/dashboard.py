@@ -195,3 +195,69 @@ async def recent_activity(
 
     return {"message": "Recent activity log - coming soon"}
 
+
+@router.get("/payouts")
+async def admin_payouts(
+    current_user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+    status_filter: str = None,
+    limit: int = 50,
+):
+    """List all payouts for admin review."""
+    from app.models.payout import Payout
+
+    stmt = select(Payout).order_by(Payout.requested_at.desc()).limit(limit)
+    if status_filter:
+        stmt = stmt.where(Payout.status == status_filter)
+
+    result = await db.execute(stmt)
+    payouts = result.scalars().all()
+
+    return {
+        "payouts": [
+            {
+                "id": str(p.id),
+                "merchant_id": str(p.merchant_id),
+                "amount": float(p.amount),
+                "currency": p.currency,
+                "status": p.status,
+                "payout_method": p.payout_method,
+                "recipient_detail": p.recipient_detail,
+                "mpesa_receipt": p.mpesa_receipt,
+                "error_message": p.error_message,
+                "requested_at": p.requested_at.isoformat() if p.requested_at else None,
+                "processed_at": p.processed_at.isoformat() if p.processed_at else None,
+            }
+            for p in payouts
+        ],
+        "total": len(payouts),
+    }
+
+
+@router.get("/wallets")
+async def admin_wallets(
+    current_user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """List all merchant wallets for admin overview."""
+    from app.models.merchant_wallet import MerchantWallet
+
+    stmt = select(MerchantWallet).order_by(MerchantWallet.updated_at.desc())
+    result = await db.execute(stmt)
+    wallets = result.scalars().all()
+
+    return {
+        "wallets": [
+            {
+                "merchant_id": str(w.merchant_id),
+                "available_balance": float(w.available_balance),
+                "pending_balance": float(w.pending_balance),
+                "total_earned": float(w.total_earned),
+                "total_withdrawn": float(w.total_withdrawn),
+                "currency": w.currency,
+            }
+            for w in wallets
+        ],
+        "total": len(wallets),
+    }
+

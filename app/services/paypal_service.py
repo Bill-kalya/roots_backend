@@ -1,6 +1,9 @@
 import os
+import json
 import httpx
 import logging
+
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -10,9 +13,9 @@ class PayPalService:
 
 
     def __init__(self):
-        self.client_id = os.getenv("PAYPAL_CLIENT_ID")
-        self.client_secret = os.getenv("PAYPAL_CLIENT_SECRET")
-        self.base_url = os.getenv("PAYPAL_BASE_URL", "https://api-m.sandbox.paypal.com")
+        self.client_id = os.getenv("PAYPAL_CLIENT_ID") or settings.PAYPAL_CLIENT_ID
+        self.client_secret = os.getenv("PAYPAL_CLIENT_SECRET") or settings.PAYPAL_CLIENT_SECRET
+        self.base_url = os.getenv("PAYPAL_BASE_URL") or settings.PAYPAL_BASE_URL
 
         if not self.client_id or not self.client_secret:
             logger.warning("PAYPAL_CLIENT_ID / PAYPAL_CLIENT_SECRET not set")
@@ -127,5 +130,26 @@ class PayPalService:
             "currency": currency_code,
             "raw": data,
         }
+
+    async def verify_webhook_signature(self, headers: dict, body: bytes, webhook_id: str) -> bool:
+        """Verify a PayPal webhook using their verify-signature API."""
+        token = await self._get_access_token()
+        payload = {
+            "auth_algo": headers.get("paypal-auth-algo"),
+            "cert_url": headers.get("paypal-cert-url"),
+            "transmission_id": headers.get("paypal-transmission-id"),
+            "transmission_sig": headers.get("paypal-transmission-sig"),
+            "transmission_time": headers.get("paypal-transmission-time"),
+            "webhook_id": webhook_id,
+            "webhook_event": json.loads(body),
+        }
+        async with httpx.AsyncClient(timeout=20) as client:
+            resp = await client.post(
+                f"{self.base_url}/v1/notifications/verify-webhook-signature",
+                headers={"Authorization": f"Bearer {token}"},
+                json=payload,
+            )
+            resp.raise_for_status()
+            return resp.json().get("verification_status") == "SUCCESS"
 
 

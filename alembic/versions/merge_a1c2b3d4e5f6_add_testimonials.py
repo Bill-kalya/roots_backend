@@ -9,7 +9,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = 'merge_a1c2b3d4e5f6'
-down_revision = ('a1c2b3d4e5f6', 'add_testimonials_table')
+down_revision = ('a1c2b3d4e5f6', '8d3df80b5481')
 branch_labels = None
 depends_on = None
 

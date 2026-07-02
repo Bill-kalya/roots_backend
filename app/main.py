@@ -34,6 +34,7 @@ from app.api.routes.geo import router as geo_router
 
 
 from app.api.routes import mpesa
+from app.api.routes.paypal_webhooks import router as paypal_webhooks_router
 from app.api.routes.payments_paypal import router as paypal_routes
 from app.api.routes.orders import router as order_router
 from app.api.routes.payments_stripe import router as stripe_routes
@@ -51,6 +52,7 @@ from app.api.routes.receipts import router as receipts_router
 from app.api.routes.user import products as user_products, profile as user_profile, orders as user_orders
 from app.api.routes.merchant import products as merchant_products, orders as merchant_orders, analytics as merchant_analytics
 from app.api.routes.merchant import payout_settings as merchant_payout_settings
+from app.api.routes.merchant import wallet as merchant_wallet
 from app.api.routes.admin import dashboard as admin_dashboard, users as admin_users, products as admin_products, settings as admin_settings
 from app.api.errors import (
     request_validation_exception_handler,
@@ -388,6 +390,9 @@ app.include_router(merchant_public_router, prefix="/api/merchants", tags=["Publi
 app.include_router(geo_router, prefix="/api", tags=["Geo"])
 
 
+# ============ PayPal Webhooks (Unauthenticated) ============
+app.include_router(paypal_webhooks_router, tags=["PayPal Webhooks"])
+
 # ============ M-PESA (Public) ============
 app.include_router(mpesa.router, prefix="/api/payments/mpesa", tags=["M-Pesa"])
 
@@ -434,6 +439,7 @@ app.include_router(merchant_products.router, prefix="/api/merchant/products", ta
 app.include_router(merchant_orders.router, prefix="/api/merchant/orders", tags=["Merchant - Orders"])
 app.include_router(merchant_analytics.router, prefix="/api/merchant/analytics", tags=["Merchant - Analytics"])
 app.include_router(merchant_payout_settings.router, prefix="/api/merchant", tags=["Merchant - Payout Settings"])
+app.include_router(merchant_wallet.router, prefix="/api/merchant", tags=["Merchant - Wallet"])
 # NOTE: merchant analytics router provides GET / for /api/merchant/analytics
 
 
