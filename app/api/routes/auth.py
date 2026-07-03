@@ -337,8 +337,8 @@ async def reset_password(
         
         for key, desc in req_mapping.items():
             met = all_checks.get(key, False)
-            status = "✓" if met else "✗"
-            req_list.append(f"{status} {desc}")
+            mark = "✓" if met else "✗"
+            req_list.append(f"{mark} {desc}")
         
         error_msg = "Password must meet all requirements:\n" + "\n".join(req_list)
         error_msg += "\n\nExample: TestPass123!Abc"
