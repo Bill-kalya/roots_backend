@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 import uuid
 
 revision = "zz_wallet_escrow_phase1"
-down_revision = "a6f6154ec010"
+down_revision = "baseline_20260703"
 branch_labels = None
 depends_on = None
 

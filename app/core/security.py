@@ -74,7 +74,30 @@ def get_password_hash(password: str) -> str:
     # Validate password before hashing
     is_valid, checks = PasswordValidator.validate(password)
     if not is_valid:
-        raise ValueError(f"Password does not meet requirements: {checks}")
+        # Build complete list of all requirements with status
+        all_requirements = {
+            'min_length': ('8+ characters', len(password) >= 8),
+            'max_length': ('128 characters max', len(password) <= 128),
+            'has_uppercase': ('1 uppercase letter (A-Z)', bool(re.search(r'[A-Z]', password))),
+            'has_lowercase': ('1 lowercase letter (a-z)', bool(re.search(r'[a-z]', password))),
+            'has_digit': ('1 number (0-9)', bool(re.search(r'\d', password))),
+            'has_special': ('1 special char (!@#$%^&*(),.?":{}|<>)', bool(re.search(r'[!@#$%^&*(),.?":{}|<>]', password))),
+            'no_common_patterns': ('No common patterns (password123, qwerty, 123456)', not any([
+                password.lower() in ["password", "admin", "123456", "qwerty", "letmein"],
+                re.search(r'(.)\1{3,}', password),
+                re.search(r'12345|54321|abcdef', password.lower())
+            ]))
+        }
+        
+        # Format complete requirements list
+        req_list = []
+        for key, (desc, met) in all_requirements.items():
+            status = "✓" if met else "✗"
+            req_list.append(f"{status} {desc}")
+        
+        error_msg = "Password must meet all requirements:\n" + "\n".join(req_list)
+        error_msg += "\n\nExample: TestPass123!Abc"
+        raise ValueError(error_msg)
     return pwd_context.hash(password)
 
 def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:

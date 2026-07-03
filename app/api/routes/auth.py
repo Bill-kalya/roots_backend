@@ -319,10 +319,33 @@ async def reset_password(
     # Validate password strength before resetting
     strength = await service.validate_password(payload.new_password)
     if not strength.get("is_valid"):
-
+        # Build detailed error message with all requirements
+        failed = strength.get("failed_requirements", [])
+        all_checks = strength.get("checks", {})
+        
+        # Build complete requirements list with status
+        req_list = []
+        req_mapping = {
+            'min_length': '8+ characters',
+            'max_length': '128 characters max',
+            'has_uppercase': '1 uppercase letter (A-Z)',
+            'has_lowercase': '1 lowercase letter (a-z)',
+            'has_digit': '1 number (0-9)',
+            'has_special': '1 special char (!@#$%^&*(),.?":{}|<>)',
+            'no_common_patterns': 'No common patterns (password123, qwerty, 123456)'
+        }
+        
+        for key, desc in req_mapping.items():
+            met = all_checks.get(key, False)
+            status = "✓" if met else "✗"
+            req_list.append(f"{status} {desc}")
+        
+        error_msg = "Password must meet all requirements:\n" + "\n".join(req_list)
+        error_msg += "\n\nExample: TestPass123!Abc"
+        
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Password does not meet requirements."
+            detail=error_msg
         )
 
     success = await service.reset_password(payload.token, payload.new_password)

@@ -1,3 +1,7 @@
 __pycache__/
 *.pyc
 .env
+
+# Alembic archive - kept locally for reference but not tracked in git
+# to avoid confusion with active migrations in alembic/versions/
+alembic/versions_archive/

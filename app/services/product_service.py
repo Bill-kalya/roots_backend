@@ -95,3 +95,42 @@ class ProductService:
         
         result = await self.db.execute(query)
         return result.scalars().all()
+
+    async def get_merchant_products(
+        self,
+        merchant_id: UUID,
+        status: Optional[str] = None,
+        page: int = 1,
+        limit: int = 100,
+    ) -> Tuple[List[Product], int]:
+        """Get products for a specific merchant with optional status filter.
+        
+        Args:
+            merchant_id: The merchant's user ID
+            status: Optional filter - "active" for active products only, None for all
+            page: Page number (1-indexed)
+            limit: Items per page (max 100)
+            
+        Returns:
+            Tuple of (products list, total count)
+        """
+        # Base query scoped to merchant
+        query = select(Product).where(Product.merchant_id == merchant_id)
+        
+        # Apply optional status filter
+        if status == "active":
+            query = query.where(Product.is_active.is_(True))
+        
+        # Get total count before pagination
+        count_query = select(func.count()).select_from(query.subquery())
+        total = await self.db.scalar(count_query)
+        
+        # Apply sorting and pagination
+        query = query.order_by(Product.created_at.desc())
+        offset = (page - 1) * limit
+        query = query.offset(offset).limit(limit)
+        
+        result = await self.db.execute(query)
+        products = result.scalars().all()
+        
+        return products, total

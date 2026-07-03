@@ -15,7 +15,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 revision = "zz_security_audit_phase2"
-down_revision = ("add_testimonials_table", "zz_wallet_escrow_phase1")
+down_revision = "zz_wallet_escrow_phase1"
 branch_labels = None
 depends_on = None
 

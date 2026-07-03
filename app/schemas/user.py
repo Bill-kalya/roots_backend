@@ -68,18 +68,30 @@ class UserCreate(UserBase):
         from app.core.security import PasswordValidator
         is_valid, checks = PasswordValidator.validate(password)
         if not is_valid:
-            failed = [k for k, v in checks.items() if not v]
-            messages = {
-                'min_length': 'at least 8 characters',
-                'max_length': 'maximum 128 characters',
-                'has_uppercase': 'one uppercase letter (A-Z)',
-                'has_lowercase': 'one lowercase letter (a-z)',
-                'has_digit': 'one number (0-9)',
-                'has_special': 'one special char (!@#$%^&*(),.?":{}|<> )',
-                'no_common_patterns': 'no common/repeated patterns (password123, qwerty, 123456)'
+            # Build complete list of all requirements with status
+            all_requirements = {
+                'min_length': ('8+ characters', len(password) >= 8),
+                'max_length': ('128 characters max', len(password) <= 128),
+                'has_uppercase': ('1 uppercase letter (A-Z)', bool(__import__('re').search(r'[A-Z]', password))),
+                'has_lowercase': ('1 lowercase letter (a-z)', bool(__import__('re').search(r'[a-z]', password))),
+                'has_digit': ('1 number (0-9)', bool(__import__('re').search(r'\d', password))),
+                'has_special': ('1 special char (!@#$%^&*(),.?":{}|<>)', bool(__import__('re').search(r'[!@#$%^&*(),.?":{}|<>]', password))),
+                'no_common_patterns': ('No common patterns (password123, qwerty, 123456)', not any([
+                    password.lower() in ["password", "admin", "123456", "qwerty", "letmein"],
+                    __import__('re').search(r'(.)\1{3,}', password),
+                    __import__('re').search(r'12345|54321|abcdef', password.lower())
+                ]))
             }
-            failed_msgs = [messages.get(k, k.replace('_', ' ').title()) for k in failed]
-            raise ValueError(f"Password invalid: {', '.join(failed_msgs)}. Suggestion: TestPass123!Abc")
+            
+            # Format complete requirements list
+            req_list = []
+            for key, (desc, met) in all_requirements.items():
+                status = "✓" if met else "✗"
+                req_list.append(f"{status} {desc}")
+            
+            error_msg = "Password must meet all requirements:\n" + "\n".join(req_list)
+            error_msg += "\n\nExample: TestPass123!Abc"
+            raise ValueError(error_msg)
         return data
 
 class UserLogin(BaseModel):

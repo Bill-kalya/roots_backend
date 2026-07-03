@@ -155,10 +155,9 @@ async def get_merchant_products(
 ):
     """Get merchant's products."""
     service = ProductService(db)
-    from app.schemas.common import PaginationParams
-
-    params = PaginationParams(page=1, limit=100)
-    products, _ = await service.get_products(params)
+    products, _ = await service.get_merchant_products(
+        merchant_id=current_user.id
+    )
     return [ProductResponse.model_validate(p) for p in products]
 
 
