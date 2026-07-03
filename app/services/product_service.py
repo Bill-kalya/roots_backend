@@ -2,6 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, or_
 from sqlalchemy.orm import joinedload, selectinload
 from typing import Optional, Tuple, List
+from uuid import UUID
 from app.models.product import Product
 from app.schemas.product import ProductListResponse, ProductResponse
 from app.schemas.common import PaginationParams
