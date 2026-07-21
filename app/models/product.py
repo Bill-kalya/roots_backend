@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Numeric, Integer, Boolean, Text
+from sqlalchemy import Column, String, Numeric, Integer, Boolean, Text, text
 from sqlalchemy.dialects.postgresql import UUID, ARRAY
 import uuid
 from app.db.base import Base, TimestampMixin
@@ -31,7 +31,7 @@ class Product(Base, TimestampMixin):
     long_description = Column(Text, nullable=True)
     price = Column(Numeric(10, 2), nullable=False)
     image_url = Column(String(500), nullable=False)
-    gallery = Column(ARRAY(Text), default=[])
+    gallery = Column(ARRAY(Text), nullable=False, default=list, server_default=text("'{}'::text[]"))
     origin = Column(String(100), nullable=False)
     tag = Column(String(100))
     stock = Column(Integer, default=0)
@@ -41,5 +41,5 @@ class Product(Base, TimestampMixin):
     weight = Column(String(100), nullable=True)
     dimensions = Column(String(100), nullable=True)
     year = Column(Integer, nullable=True)
-    materials = Column(ARRAY(Text), default=[])
+    materials = Column(ARRAY(Text), nullable=False, default=list, server_default=text("'{}'::text[]"))
 
