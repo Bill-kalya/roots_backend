@@ -24,6 +24,9 @@ from app.security.audit_log import AuditLog
 from app.models.merchant_wallet import MerchantWallet
 from app.models.transaction_ledger import TransactionLedger
 from app.models.payout import Payout
+from app.models.receipt import Receipt
+from app.models.merchant_payout_settings import MerchantPayoutSettings
+from app.models.shipping_zone import ShippingZone
 
 
 
@@ -35,7 +38,7 @@ def get_url():
         url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
     return url
 
-config.set_main_option("sqlalchemy.url", get_url())
+config.set_main_option("sqlalchemy.url", get_url().replace("%", "%%"))
 
 # if config.config_file_name is not None:
 #     fileConfig(config.config_file_name)
