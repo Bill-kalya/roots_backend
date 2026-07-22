@@ -104,6 +104,8 @@ class CartService:
                         if item["product_id"] == str(product_id):
                             item["quantity"] = quantity
                             item["price"] = float(product_data["price"])  # Update price
+                            if "merchant_id" in product_data:
+                                item["merchant_id"] = product_data["merchant_id"]
                             found = True
                             break
                     
@@ -114,7 +116,8 @@ class CartService:
                             "price": float(product_data["price"]),
                             "quantity": quantity,
                             "image_url": product_data["image_url"],
-                            "origin": product_data["origin"]
+                            "origin": product_data["origin"],
+                            "merchant_id": product_data.get("merchant_id"),
                         })
                 
                 # Update version

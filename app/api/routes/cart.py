@@ -80,7 +80,8 @@ async def update_cart_item(
         "name": product.name,
         "price": float(product.price),
         "image_url": product.image_url or "",
-        "origin": getattr(product, 'origin', '')
+        "origin": getattr(product, 'origin', ''),
+        "merchant_id": str(product.merchant_id) if getattr(product, 'merchant_id', None) else None,
     }
     
     result = await cart_service.set_cart_item(

@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from uuid import UUID
 from decimal import Decimal
+from typing import Optional
 
 class CartItem(BaseModel):
     product_id: UUID
@@ -9,6 +10,7 @@ class CartItem(BaseModel):
     quantity: int
     image_url: str
     origin: str
+    merchant_id: Optional[UUID] = None
 
 class CartResponse(BaseModel):
     items: list[CartItem]
