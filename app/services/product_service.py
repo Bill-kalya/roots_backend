@@ -27,7 +27,11 @@ class ProductService:
             query = query.where(
                 or_(
                     Product.name.ilike(f"%{params.search}%"),
-                    Product.description.ilike(f"%{params.search}%")
+                    Product.description.ilike(f"%{params.search}%"),
+                    Product.long_description.ilike(f"%{params.search}%"),
+                    Product.artisan.ilike(f"%{params.search}%"),
+                    Product.materials.ilike(f"%{params.search}%"),
+                    Product.origin.ilike(f"%{params.search}%"),
                 )
             )
         
