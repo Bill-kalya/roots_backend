@@ -306,14 +306,6 @@ class OrderService:
         await self.db.commit()
         await self.db.refresh(order)
 
-        # Credit merchant wallets (escrow hold)
-        try:
-            from app.services.wallet_service import WalletService
-            ws = WalletService(self.db)
-            await ws.split_order_earnings(order_id)
-        except Exception as e:
-            logger.error("Failed to credit merchant wallets for order %s: %s", order_id, e)
-
         # Cancel timeout job
         await self._cancel_order_timeout(order_id)
 

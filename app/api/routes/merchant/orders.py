@@ -118,7 +118,7 @@ async def update_order_status(
     db: AsyncSession = Depends(get_db),
     new_status_str: str = Query("SHIPPED", alias="status"),
 ):
-    """Update order status. When status=DELIVERED, escrowed funds are released to merchant."""
+    """Update order status."""
     from app.models.order import OrderStatus
 
     try:
@@ -165,35 +165,7 @@ async def update_order_status(
 
     order.status = new_status
 
-    # Release escrow on delivery confirmation
-    if new_status == OrderStatus.DELIVERED:
-        from app.services.wallet_service import WalletService
-        from decimal import Decimal
-        from app.models.order import OrderItem
-        from app.models.product import Product
-
-        items_stmt = select(OrderItem).where(OrderItem.order_id == order.id)
-        items_res = await db.execute(items_stmt)
-        items = items_res.scalars().all()
-
-        merchant_shares: dict[UUID, Decimal] = {}
-        for item in items:
-            product = await db.get(Product, item.product_id)
-            if not product or not product.merchant_id:
-                continue
-            share = merchant_shares.get(product.merchant_id, Decimal("0.00"))
-            share += item.price_snapshot * item.quantity
-            merchant_shares[product.merchant_id] = share
-
-        ws = WalletService(db)
-        client_ip = request.headers.get("X-Forwarded-For", request.client.host if request.client else None)
-        for merchant_id, amount in merchant_shares.items():
-            try:
-                await ws.release_to_available(merchant_id, amount, order.id, actor_id=current_user.id, ip_address=client_ip)
-            except ValueError as e:
-                logger.warning("Escrow release failed for merchant %s on order %s: %s", merchant_id, order.id, e)
-
-    elif new_status == OrderStatus.CANCELLED:
+    if new_status == OrderStatus.CANCELLED:
         from app.models.payment import Payment, PaymentStatus
         payment_stmt = select(Payment).where(Payment.order_id == order.id, Payment.status == PaymentStatus.COMPLETED.value)
         payment_res = await db.execute(payment_stmt)

@@ -11,7 +11,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.db.base import Base
-from app.core.config import settings
 from app.models.user import User
 from app.models.product import Product
 from app.models.order import Order, OrderItem
@@ -21,19 +20,17 @@ from app.models.newsletter import NewsletterSubscriber
 from app.models.conversation import Conversation
 from app.models.message import Message
 from app.security.audit_log import AuditLog
-from app.models.merchant_wallet import MerchantWallet
-from app.models.transaction_ledger import TransactionLedger
-from app.models.payout import Payout
 from app.models.receipt import Receipt
-from app.models.merchant_payout_settings import MerchantPayoutSettings
 from app.models.shipping_zone import ShippingZone
-
 
 
 config = context.config
 
 def get_url():
-    url = settings.DATABASE_URL
+    url = os.environ.get("DATABASE_URL")
+    if not url:
+        raise RuntimeError("DATABASE_URL environment variable is not set")
+    # Alembic runs synchronously but uses asyncpg driver for consistency
     if url.startswith("postgresql://"):
         url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
     return url
