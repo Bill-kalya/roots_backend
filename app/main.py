@@ -29,6 +29,7 @@ from app.api.routes.merchant.public import router as merchant_public_router
 from app.api.routes.chat import router as chat_router
 from app.api.routes.conversations import router as conversations_router
 from app.api.routes.geo import router as geo_router
+from app.api.routes.session import router as session_router
 
 
 
@@ -40,6 +41,7 @@ from app.api.routes.orders import router as order_router
 from app.api.routes.payments_stripe import router as stripe_routes
 from app.api.routes.shipping import router as shipping_router
 from app.api.routes.receipts import router as receipts_router
+from app.api.routes.checkout import router as checkout_router
 
 
 
@@ -49,11 +51,11 @@ from app.api.routes.receipts import router as receipts_router
 
 
 # Role-based route imports
-from app.api.routes.user import products as user_products, profile as user_profile, orders as user_orders
+from app.api.routes.user import products as user_products, profile as user_profile, orders as user_orders, settings as user_settings, account as user_account
 from app.api.routes.merchant import products as merchant_products, orders as merchant_orders, analytics as merchant_analytics
 from app.api.routes.merchant import payout_settings as merchant_payout_settings
 from app.api.routes.merchant import wallet as merchant_wallet
-from app.api.routes.admin import dashboard as admin_dashboard, users as admin_users, products as admin_products, settings as admin_settings
+from app.api.routes.admin import dashboard as admin_dashboard, users as admin_users, products as admin_products, settings as admin_settings, wallet as admin_wallet
 from app.api.errors import (
     request_validation_exception_handler,
     http_exception_handler,
@@ -388,6 +390,7 @@ app.include_router(testimonials.router, prefix="/api/testimonials", tags=["Testi
 app.include_router(public_products.router, prefix="/api/products", tags=["Public Products"])
 app.include_router(merchant_public_router, prefix="/api/merchants", tags=["Public Merchants"])
 app.include_router(geo_router, prefix="/api", tags=["Geo"])
+app.include_router(session_router, prefix="/api/v1", tags=["Session"])
 
 
 # ============ PayPal Webhooks (Unauthenticated) ============
@@ -398,6 +401,9 @@ app.include_router(mpesa.router, prefix="/api/payments/mpesa", tags=["M-Pesa"])
 
 # ============ PayPal (Authenticated) ============
 app.include_router(paypal_routes, prefix="/api/payments/paypal", tags=["PayPal"])
+
+# ============ Stripe (Authenticated) ============
+app.include_router(stripe_routes, prefix="/api/payments/stripe", tags=["Stripe"])
 
 # ============ Chat (WebSocket) ============
 
@@ -416,6 +422,9 @@ app.include_router(order_router, prefix="/api/orders", tags=["Orders"])
 # ============ Shipping (Rates) ============
 app.include_router(shipping_router, prefix="/api/shipping", tags=["Shipping"])
 
+# ============ Checkout ============
+app.include_router(checkout_router, prefix="/api/checkout", tags=["Checkout"])
+
 # ============ Receipts (Receipt generation/verification) ============
 app.include_router(receipts_router)
 
@@ -433,6 +442,8 @@ app.include_router(cart.router, prefix="/api/cart", tags=["Cart"])
 app.include_router(user_products.router, prefix="/api/user/products", tags=["User - Products"])
 app.include_router(user_profile.router, prefix="/api/user/profile", tags=["User - Profile"])
 app.include_router(user_orders.router, prefix="/api/user/orders", tags=["User - Orders"])
+app.include_router(user_settings.router, prefix="/api/user/settings", tags=["User - Settings"])
+app.include_router(user_account.router, prefix="/api/user/account", tags=["User - Account"])
 
 # ============ MERCHANT ROUTES (Merchant Role Required) ============
 app.include_router(merchant_products.router, prefix="/api/merchant/products", tags=["Merchant - Products"])
@@ -448,6 +459,7 @@ app.include_router(admin_dashboard.router, prefix="/api/admin/dashboard", tags=[
 app.include_router(admin_users.router, prefix="/api/admin/users", tags=["Admin - Users"])
 app.include_router(admin_products.router, prefix="/api/admin/products", tags=["Admin - Products"])
 app.include_router(admin_settings.router, prefix="/api/admin/settings", tags=["Admin - Settings"])
+app.include_router(admin_wallet.router, prefix="/api/admin/wallet", tags=["Admin - Wallet"])
 
 @app.get("/")
 async def root():

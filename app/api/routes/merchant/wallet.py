@@ -165,3 +165,38 @@ async def request_payout(
         "amount": float(amount),
         "status": payout.status,
     }
+
+
+@router.get("/ledger")
+async def get_merchant_ledger(
+    current_user: User = Depends(require_merchant),
+    db: AsyncSession = Depends(get_db),
+    limit: int = 50,
+    offset: int = 0,
+):
+    """Get merchant transaction ledger"""
+    stmt = (
+        select(TransactionLedger)
+        .where(TransactionLedger.merchant_id == current_user.id)
+        .order_by(TransactionLedger.created_at.desc())
+        .limit(limit)
+        .offset(offset)
+    )
+    result = await db.execute(stmt)
+    ledger = result.scalars().all()
+
+    return {
+        "transactions": [
+            {
+                "id": str(t.id),
+                "amount": float(t.amount),
+                "entry_type": t.entry_type,
+                "reference_id": t.reference_id,
+                "reference_type": t.reference_type,
+                "description": t.description,
+                "created_at": t.created_at.isoformat() if t.created_at else None,
+            }
+            for t in ledger
+        ],
+        "total": len(ledger),
+    }

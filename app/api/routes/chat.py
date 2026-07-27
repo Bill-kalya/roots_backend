@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
@@ -10,7 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSock
 from sqlalchemy import select
 
 from app.cache.redis_manager import redis_manager
-from app.core.dependencies import get_current_user  # noqa: F401
+from app.core.dependencies import get_current_user
 from app.db.session import get_db
 from app.models.conversation import Conversation
 from app.models.message import Message
@@ -21,43 +22,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-def _make_message_payload(msg: Message) -> dict:
-    # Frontend currently expects fields: id, from, text, time, status
-    # We map sender_id -> "customer" / "merchant" based on whether sender is the websocket user
-    # at publish time; so we only include sender_id and let caller map if needed.
-    return {
-        "type": "message",
-        "id": str(msg.id),
-        "conversation_id": str(msg.conversation_id),
-        "sender_id": str(msg.sender_id),
-        "content": msg.content,
-        "status": msg.status,
-        "created_at": msg.created_at.isoformat() if msg.created_at else None,
-    }
-
-
-def _serialize_history(messages: list[Message]) -> list[dict]:
-    # Order newest->oldest in DB; frontend shows given list order.
-    out: list[dict] = []
-    for m in messages:
-        # Determine from-field: frontend uses "customer" for user messages, everything else treated as merchant.
-        # Since we don’t know role here without current_user, we send “from” as sender_id string mapping
-        # by convention: Chat.jsx compares message.from === "customer".
-        # We'll set from = "customer" if sender matches current websocket user is done in caller.
-        out.append(
-            {
-                "id": str(m.id),
-                "from": "customer",
-                "content": m.content,
-                "time": m.created_at.strftime("%H:%M") if getattr(m, "created_at", None) else "",
-                "status": m.status,
-            }
-        )
-    return out
-
-
 def _parse_room_id(room_id: str) -> tuple[Optional[UUID], Optional[UUID]]:
-    # Deterministic room_id format in this codebase: <customer_id>__<merchant_id>
     if "__" not in room_id:
         return None, None
     left, right = room_id.split("__", 1)
@@ -73,16 +38,10 @@ async def chat_ws(
     room_id: str,
     token: str = Query(None),
 ):
-    # Token is required for production correctness; frontend passes ?token=access_token
     if not token:
         await websocket.close(code=4001, reason="token required")
         return
 
-    # Authenticate websocket user
-
-    # Decode token directly (token is passed as ?token=access_token)
-
-    # decode via app.core.security.decode_token
     from app.core.security import decode_token
 
     payload = decode_token(token)
@@ -101,7 +60,6 @@ async def chat_ws(
         await websocket.close(code=4001, reason="invalid token")
         return
 
-    # Load user and validate active
     async with get_db() as db:
         user_stmt = select(User).where(User.id == user_uuid, User.is_active == True)
         user = (await db.execute(user_stmt)).scalar_one_or_none()
@@ -110,7 +68,6 @@ async def chat_ws(
         await websocket.close(code=4001, reason="unauthorized")
         return
 
-    # Authorization: user must be either customer or merchant for this deterministic room_id
     customer_id, merchant_id = _parse_room_id(room_id)
     if not customer_id or not merchant_id:
         await websocket.close(code=4003, reason="unauthorized")
@@ -122,7 +79,6 @@ async def chat_ws(
 
     await websocket.accept()
 
-    # Redis pub/sub: subscribe this worker to room channel
     redis = redis_manager._client
     if not redis:
         await websocket.close(code=1011, reason="redis not initialized")
@@ -132,7 +88,6 @@ async def chat_ws(
     pubsub = redis.pubsub()
     await pubsub.subscribe(channel)
 
-    # Resolve conversation/merchant for UI
     async with get_db() as db:
         conv_stmt = select(Conversation).where(Conversation.room_id == room_id)
         conv = (await db.execute(conv_stmt)).scalar_one_or_none()
@@ -140,8 +95,6 @@ async def chat_ws(
         merchant_user_stmt = select(User).where(User.id == merchant_id)
         merchant_user = (await db.execute(merchant_user_stmt)).scalar_one_or_none()
 
-
-        # Load last 50 messages
         history_msgs: list[Message] = []
         if conv:
             history_stmt = (
@@ -152,7 +105,6 @@ async def chat_ws(
             )
             history_msgs = (await db.execute(history_stmt)).scalars().all()
         history_msgs = list(reversed(history_msgs))
-
 
     merchant_payload = {
         "name": getattr(merchant_user, "store_name", None) or getattr(merchant_user, "full_name", None) or "Merchant",
@@ -172,7 +124,6 @@ async def chat_ws(
         }
     )
 
-    # Convert history to frontend shape with proper from mapping
     history_out: list[dict] = []
     for m in history_msgs:
         is_customer = str(m.sender_id) == str(customer_id)
@@ -185,7 +136,6 @@ async def chat_ws(
                 "time": m.created_at.strftime("%H:%M") if getattr(m, "created_at", None) else "",
                 "status": m.status,
             }
-
         )
 
     await websocket.send_json({"type": "history", "messages": history_out})
@@ -193,7 +143,6 @@ async def chat_ws(
     async def _publisher_loop():
         try:
             async for raw in pubsub.listen():
-
                 if raw.get("type") != "message":
                     continue
                 data = raw.get("data")
@@ -201,7 +150,6 @@ async def chat_ws(
                     continue
                 frame = json.loads(data) if isinstance(data, str) else data
 
-                # frame contains persisted message; adapt to frontend
                 msg = frame.get("message") or frame
                 message_id = msg.get("id")
                 sender_id = msg.get("sender_id")
@@ -209,12 +157,9 @@ async def chat_ws(
                 status = msg.get("status", "delivered")
                 created_at = msg.get("created_at")
 
-                # created_at is ISO; frontend needs HH:MM
                 time_str = ""
                 if created_at:
                     try:
-                        from datetime import datetime
-
                         dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
                         time_str = dt.strftime("%H:%M")
                     except Exception:
@@ -224,7 +169,7 @@ async def chat_ws(
                     "type": "message",
                     "id": message_id,
                     "from": "customer" if sender_id == str(customer_id) else "merchant",
-                    "content": content,
+                    "text": content,
                     "encrypted": bool(msg.get("encrypted", False)),
                     "time": time_str,
                     "status": status,
@@ -242,23 +187,16 @@ async def chat_ws(
             frame_type = data.get("type")
 
             if frame_type == "handshake":
-                # Frontend already got conversation/history; ignore.
                 continue
 
             if frame_type == "message":
-                content = str(data.get("text") or data.get("content") or "").strip()
+                content = str(data.get("content") or data.get("text") or "").strip()
                 if not content:
                     continue
 
                 is_encrypted = bool(data.get("encrypted", False))
                 sender_id = user.id
 
-                # If message is encrypted, keep ciphertext in `content` (same as stored `msg.content`).
-                # If message is not encrypted, `content` contains plaintext.
-
-
-
-                # Ensure conversation exists; create if missing
                 async with get_db() as db:
                     conv = (
                         (await db.execute(select(Conversation).where(Conversation.room_id == room_id))).scalar_one_or_none()
@@ -285,7 +223,6 @@ async def chat_ws(
                     await db.commit()
                     await db.refresh(msg)
 
-                # Publish after persistence
                 publish_payload = {
                     "type": "message",
                     "message": {
@@ -300,10 +237,34 @@ async def chat_ws(
                 }
                 await redis.publish(channel, json.dumps(publish_payload))
 
+            elif frame_type == "typing":
+                await redis.publish(
+                    channel,
+                    json.dumps({
+                        "type": "typing",
+                        "user_id": str(user.id),
+                        "typing": data.get("typing", False),
+                    }),
+                )
 
-            else:
-                # typing/read/etc: ignore for now
-                continue
+            elif frame_type == "read":
+                message_id = data.get("message_id")
+                if message_id:
+                    async with get_db() as db:
+                        msg_stmt = select(Message).where(Message.id == message_id)
+                        msg = (await db.execute(msg_stmt)).scalar_one_or_none()
+                        if msg and str(msg.sender_id) != str(user.id):
+                            msg.status = "read"
+                            await db.commit()
+
+                    await redis.publish(
+                        channel,
+                        json.dumps({
+                            "type": "read",
+                            "message_id": message_id,
+                            "reader_id": str(user.id),
+                        }),
+                    )
 
     except WebSocketDisconnect:
         return
@@ -317,7 +278,3 @@ async def chat_ws(
             await pubsub.close()
         except Exception:
             pass
-
-
-
-

@@ -43,6 +43,7 @@ async def get_public_merchant(merchantId: str, db: AsyncSession = Depends(get_db
 
 
 @router.get("/products", response_model=dict)
+@router.get("/{merchantId}/products", response_model=dict)
 async def get_public_merchant_products(
     merchantId: str,
     limit: int = Query(50, ge=1, le=200),
