@@ -368,7 +368,7 @@ class Settings(BaseSettings):
     # =========================================================================
     STRIPE_SECRET_KEY: Optional[str] = None
     STRIPE_WEBHOOK_SECRET: Optional[str] = None
-    STRIPE_CURRENCY: str = "usd"
+    STRIPE_CURRENCY: str = "kes"
 
     # =========================================================================
     # PAYPAL — Payments

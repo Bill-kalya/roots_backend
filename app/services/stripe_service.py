@@ -1,3 +1,4 @@
+import asyncio
 from fastapi import HTTPException
 
 try:
@@ -6,6 +7,8 @@ except ModuleNotFoundError:  # pragma: no cover
     stripe = None
 
 from app.core.config import settings
+
+STRIPE_API_VERSION = "2024-12-18.acacia"
 
 
 class StripeService:
@@ -27,6 +30,7 @@ class StripeService:
             )
 
         stripe.api_key = settings.STRIPE_SECRET_KEY
+        stripe.api_version = STRIPE_API_VERSION
 
     async def create_payment_intent(
         self,
@@ -36,20 +40,20 @@ class StripeService:
         order_id: str,
         payment_id: str | None = None,
     ):
-        # NOTE: stripe-python is synchronous. This code is called from async routes.
-        # For production, consider offloading to a threadpool if needed.
-        if stripe is None:  # extra guard for safety across deployments
+        if stripe is None:
             raise HTTPException(status_code=503, detail="Stripe SDK not installed")
 
         metadata = {"order_id": order_id}
         if payment_id:
             metadata["payment_id"] = payment_id
 
-        intent = stripe.PaymentIntent.create(
+        intent = await asyncio.to_thread(
+            stripe.PaymentIntent.create,
             amount=amount_cents,
             currency=currency,
             metadata=metadata,
             automatic_payment_methods={"enabled": True},
+            idempotency_key=f"order_{order_id}",
         )
         return intent
 
