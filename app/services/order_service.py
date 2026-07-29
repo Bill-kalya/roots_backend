@@ -273,8 +273,8 @@ class OrderService:
     
     async def confirm_payment(self, order_id: UUID, payment_intent_id: str) -> Order:
         """Confirm payment and commit inventory"""
-        
-        order = await self.get_order_by_id(order_id)
+
+        order = await self.get_order_by_id(order_id, for_update=True)
         if not order:
             raise ValueError("Order not found")
 
@@ -400,11 +400,13 @@ class OrderService:
         from app.workers.order_worker import fulfill_order
         fulfill_order.apply_async(args=[str(order_id)], countdown=60)
     
-    async def get_order_by_id(self, order_id: UUID) -> Optional[Order]:
-        """Get order by ID"""
-        
-        query = select(Order).where(Order.id == order_id)
-        result = await self.db.execute(query)
+    async def get_order_by_id(self, order_id: UUID, for_update: bool = False) -> Optional[Order]:
+        """Get order by ID. Use for_update=True inside payment callbacks to prevent races."""
+        if for_update:
+            stmt = select(Order).where(Order.id == order_id).with_for_update()
+        else:
+            stmt = select(Order).where(Order.id == order_id)
+        result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
     
     async def get_order_with_items(self, order_id: UUID) -> Optional[Dict[str, Any]]:

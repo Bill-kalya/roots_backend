@@ -25,6 +25,8 @@ class Settings(BaseSettings):
     MPESA_CALLBACK_URL: Optional[str] = None
     MPESA_CALLBACK_SECRET: Optional[str] = None
     MPESA_ACCOUNT_REFERENCE: str = "ROOTS"
+    # "CustomerPayBillOnline" for PayBill shortcodes, "CustomerBuyGoodsOnline" for Till numbers.
+    MPESA_TRANSACTION_TYPE: str = "CustomerBuyGoodsOnline"
 
     APP_VERSION: str = "1.0.0"
     ENVIRONMENT: str = "development"  # development | staging | production
@@ -357,6 +359,13 @@ class Settings(BaseSettings):
             # Debug mode leaks stack traces
             if self.DEBUG:
                 raise ValueError("DEBUG must be False in production.")
+            # M-Pesa callback secret is mandatory in production to prevent
+            # forged callback attacks that mark payments as completed.
+            if not self.MPESA_CALLBACK_SECRET:
+                raise ValueError(
+                    "MPESA_CALLBACK_SECRET must be set in production. "
+                    "This prevents forged M-Pesa callbacks."
+                )
 
         return self
 

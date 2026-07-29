@@ -20,6 +20,7 @@ class MpesaService:
         self.token_url = settings.MPESA_TOKEN_URL
         self.callback_url = settings.MPESA_CALLBACK_URL
         self.account_reference = settings.MPESA_ACCOUNT_REFERENCE
+        self.transaction_type = settings.MPESA_TRANSACTION_TYPE
 
 
         if not self.stk_url or not self.token_url:
@@ -67,7 +68,7 @@ class MpesaService:
             "BusinessShortCode": self.business_short_code,
             "Password": password,
             "Timestamp": timestamp,
-            "TransactionType": "CustomerPayBillOnline",
+            "TransactionType": self.transaction_type,
             "Amount": amount,
             "PartyA": phone,
             "PartyB": self.business_short_code,
@@ -83,9 +84,11 @@ class MpesaService:
             import json
 
             resp_text = resp.text
-            logger.warning(f"STK PAYLOAD SENT: {json.dumps(payload, indent=2)}")
-            logger.warning(
-                f"SAFARICOM RAW RESPONSE: {resp.status_code} - {resp_text}"
+            # Log at DEBUG level and mask phone to avoid PII in production logs.
+            masked_phone = phone[:6] + "****" if phone and len(phone) > 6 else phone
+            logger.debug("STK push sent phone=%s amount=%s", masked_phone, amount)
+            logger.debug(
+                "Safaricom response status=%s", resp.status_code
             )
 
             resp.raise_for_status()

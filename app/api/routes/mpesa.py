@@ -87,6 +87,31 @@ async def stk_push(
 
     order_reference = f"ORDER-{order_obj.id}"
 
+    # Idempotency guard: if there's already a PENDING Payment for this order,
+    # return its checkout_request_id instead of firing a second STK push.
+    existing_stmt = (
+        select(Payment)
+        .where(
+            Payment.order_id == order_obj.id,
+            Payment.status == PaymentStatus.PENDING.value,
+        )
+        .order_by(Payment.created_at.desc())
+    )
+    existing_result = await db.execute(existing_stmt)
+    existing_payment = existing_result.scalar_one_or_none()
+
+    if existing_payment and existing_payment.checkout_request_id:
+        logger.info(
+            "Reusing existing PENDING payment checkout_request_id=%s payment_id=%s",
+            existing_payment.checkout_request_id,
+            existing_payment.id,
+        )
+        return {
+            "success": True,
+            "checkout_request_id": existing_payment.checkout_request_id,
+            "customer_message": "Check your phone and enter your M-Pesa PIN.",
+        }
+
     try:
         response = await MpesaService().stk_push(
             phone=phone,
@@ -95,9 +120,10 @@ async def stk_push(
         )
 
     except Exception as exc:
+        masked_phone = phone[:6] + "****" if len(phone) > 6 else phone
         logger.exception(
             "STK push failed phone=%s amount=%s",
-            phone,
+            masked_phone,
             canonical_amount,
         )
         raise HTTPException(status_code=502, detail="M-Pesa STK push failed. Please try again.")
@@ -262,6 +288,17 @@ async def mpesa_callback(request: Request, db: AsyncSession = Depends(get_db)):
                     payment.order_id,
                     exc,
                 )
+                # If the order was cancelled before the callback arrived,
+                # the payment succeeded but the order is no longer actionable.
+                # Flag for manual review rather than silently losing the payment.
+                if "cannot be paid" in str(exc).lower() or "current status" in str(exc).lower():
+                    logger.warning(
+                        "PAYMENT_ORDER_MISMATCH order_id=%s payment_id=%s "
+                        "— payment succeeded but order was already cancelled. "
+                        "Requires manual reconciliation.",
+                        payment.order_id,
+                        payment.id,
+                    )
                 confirmed_order = None
 
             # Receipt generation (idempotent by payment_reference)
