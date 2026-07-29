@@ -133,11 +133,12 @@ async def get_featured_products(
     products = await service.get_featured_products(limit)
     
     response = [ProductResponse.model_validate(p) for p in products]
+    normalized = [_normalize_product_for_ui(r.model_dump()) for r in response]
     
     # Cache for 10 minutes
-    await redis.setex(cache_key, 600, json.dumps([p.model_dump() for p in response], default=str))
+    await redis.setex(cache_key, 600, json.dumps(normalized, default=str))
     
-    return response
+    return normalized
 
 @router.get("/{product_id}", response_model=ProductResponse)
 async def get_product(
@@ -166,9 +167,10 @@ async def get_product(
         raise HTTPException(status_code=404, detail="Product not found")
     
     response = ProductResponse.model_validate(product)
+    normalized = _normalize_product_for_ui(response.model_dump())
     
     # Cache for 1 hour
-    await redis.setex(cache_key, 3600, json.dumps(response.model_dump(), default=str))
+    await redis.setex(cache_key, 3600, json.dumps(normalized, default=str))
     
-    return response
+    return normalized
 
