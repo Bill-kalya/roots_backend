@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Numeric, ForeignKey, DateTime, Text
+from sqlalchemy import Column, String, Numeric, ForeignKey, DateTime, Text, Enum
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
 import enum
@@ -13,14 +13,31 @@ class PaymentStatus(str, enum.Enum):
     CANCELLED = 'cancelled'
 
 
+class PaymentProvider(str, enum.Enum):
+    MPESA = 'mpesa'
+    STRIPE = 'stripe'
+    PAYPAL = 'paypal'
+
+
+def _values_callable(obj):
+    return [e.value for e in obj]
+
+
 class Payment(Base, TimestampMixin):
     __tablename__ = 'payments'
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     order_id = Column(UUID(as_uuid=True), ForeignKey('orders.id'), nullable=True)
-    provider = Column(String(50), nullable=False)
+    provider = Column(
+        Enum(PaymentProvider, values_callable=_values_callable, name='paymentprovider'),
+        nullable=False,
+    )
     provider_transaction_id = Column(String(255), nullable=True, unique=True)
-    status = Column(String(20), nullable=False, default='pending')
+    status = Column(
+        Enum(PaymentStatus, values_callable=_values_callable, name='paymentstatus'),
+        default=PaymentStatus.PENDING.value,
+        nullable=False,
+    )
     amount = Column(Numeric(10, 2), nullable=False)
     currency = Column(String(10), default='KES', nullable=False)
     phone = Column(String(20), nullable=True)

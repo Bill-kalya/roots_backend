@@ -33,7 +33,15 @@ class Message(Base, TimestampMixin):
 
     encrypted = Column(Boolean, nullable=False, default=False, server_default="false")
 
-    status = Column(String(20), default=MessageStatus.DELIVERED.value, nullable=False)
+    status = Column(
+        Enum(
+            MessageStatus,
+            values_callable=lambda obj: [e.value for e in obj],
+            name="messagestatus",
+        ),
+        default=MessageStatus.DELIVERED.value,
+        nullable=False,
+    )
 
 
     __table_args__ = (
