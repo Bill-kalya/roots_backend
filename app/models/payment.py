@@ -11,6 +11,7 @@ class PaymentStatus(str, enum.Enum):
     COMPLETED = 'completed'
     FAILED = 'failed'
     CANCELLED = 'cancelled'
+    REFUNDED = 'refunded'
 
 
 class PaymentProvider(str, enum.Enum):
@@ -40,6 +41,11 @@ class Payment(Base, TimestampMixin):
     )
     amount = Column(Numeric(10, 2), nullable=False)
     currency = Column(String(10), default='KES', nullable=False)
+    # KES -> USD conversion for PayPal (single-merchant store prices in KES).
+    amount_kes = Column(Numeric(10, 2), nullable=True)
+    amount_usd = Column(Numeric(10, 2), nullable=True)
+    exchange_rate = Column(Numeric(12, 6), nullable=True)
+    payer_id = Column(String(255), nullable=True)
     phone = Column(String(20), nullable=True)
     checkout_request_id = Column(String(255), nullable=True, unique=True, index=True)
     mpesa_receipt = Column(String(100), nullable=True)

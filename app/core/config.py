@@ -4,6 +4,7 @@ from pydantic_settings import BaseSettings
 from functools import lru_cache
 import secrets
 import json
+from decimal import Decimal
 
 
 class Settings(BaseSettings):
@@ -386,6 +387,8 @@ class Settings(BaseSettings):
     PAYPAL_CLIENT_SECRET: Optional[str] = None
     PAYPAL_BASE_URL: str = "https://api-m.sandbox.paypal.com"
     PAYPAL_WEBHOOK_ID: Optional[str] = None
+    # KES -> USD rate applied when creating a PayPal order. PayPal charges in USD.
+    PAYPAL_EXCHANGE_RATE: Decimal = Decimal("129.50")
 
     @model_validator(mode="after")
     def stripe_safety_checks(self) -> "Settings":

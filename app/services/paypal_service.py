@@ -107,6 +107,7 @@ class PayPalService:
         capture_status = None
         amount_value = None
         currency_code = None
+        payer_id = None
 
         # Typical structure: { "status": "COMPLETED", "purchase_units": [ { "payments": [ { "captures": [ ... ] } ] } ] }
         for pu in data.get("purchase_units", []) or []:
@@ -118,6 +119,9 @@ class PayPalService:
                     amount_value = amount.get("value") or amount_value
                     currency_code = amount.get("currency_code") or currency_code
 
+        payer = data.get("payer") or {}
+        payer_id = payer.get("payer_id")
+
         # Fallback to top-level status
         if not capture_status:
             capture_status = data.get("status")
@@ -128,6 +132,7 @@ class PayPalService:
             "capture_status": capture_status,
             "amount": amount_value,
             "currency": currency_code,
+            "payer_id": payer_id,
             "raw": data,
         }
 

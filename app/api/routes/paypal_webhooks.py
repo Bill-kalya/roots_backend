@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Request, HTTPException, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, or_
 from redis import asyncio as aioredis
 import json
 import logging
+from decimal import Decimal
 
 from app.db.session import get_db
 from app.core.dependencies import get_redis
@@ -78,44 +79,63 @@ async def paypal_webhook(
     return {"status": "processed"}
 
 
-async def _handle_capture_completed(resource: dict, db: AsyncSession, redis: aioredis.Redis):
+def _get_payment_where(resource: dict) -> tuple | None:
+    """Resolve a (paypal_order_id, capture_id) pair from a capture event."""
     capture_id = resource.get("id")
-    amount = resource.get("amount", {}).get("value")
-    currency = resource.get("amount", {}).get("currency_code")
-
     paypal_order_id = (
         resource.get("supplementary_data", {})
         .get("related_ids", {})
         .get("order_id")
     )
-    if not paypal_order_id:
-        logger.error("Webhook capture event missing paypal order id: %s", resource)
-        return
+    if not paypal_order_id and not capture_id:
+        return None
+    return (paypal_order_id, capture_id)
 
+
+async def _handle_capture_completed(resource: dict, db: AsyncSession, redis: aioredis.Redis):
+    capture_id = resource.get("id")
+    amount = resource.get("amount", {}).get("value")
+    currency = resource.get("amount", {}).get("currency_code")
+
+    ids = _get_payment_where(resource)
+    if not ids:
+        logger.error("Webhook capture event missing ids: %s", resource)
+        return
+    paypal_order_id, _ = ids
+
+    # provider_transaction_id holds the PayPal order id before capture and the
+    # capture id after; match either.
     stmt = select(Payment).where(
         Payment.provider == "paypal",
-        Payment.provider_transaction_id == paypal_order_id,
-    )
+        or_(
+            Payment.provider_transaction_id == paypal_order_id,
+            Payment.provider_transaction_id == capture_id,
+        ),
+    ).with_for_update()
     res = await db.execute(stmt)
     payment = res.scalar_one_or_none()
     if not payment:
-        logger.error("No Payment row found for PayPal order %s", paypal_order_id)
+        logger.error("No Payment row found for PayPal order %s / capture %s", paypal_order_id, capture_id)
         return
 
-    order_res = await db.execute(select(Order).where(Order.id == payment.order_id))
+    order_res = await db.execute(
+        select(Order).where(Order.id == payment.order_id).with_for_update()
+    )
     order = order_res.scalar_one_or_none()
     if not order:
         logger.error("Payment %s has no matching order", payment.id)
         return
 
-    if currency != "USD" or str(amount) != str(order.total):
+    # Reconcile against the USD amount stored at create-order time.
+    expected_usd = payment.amount_usd if payment.amount_usd is not None else Decimal(order.total)
+    if currency != "USD" or Decimal(str(amount)) != expected_usd:
         payment.status = PaymentStatus.FAILED.value
         payment.result_code = "WEBHOOK_AMOUNT_MISMATCH"
         await db.commit()
         logger.critical(
             "PayPal webhook amount mismatch order=%s expected=%s got=%s %s -- "
             "money may have moved, needs manual review/refund",
-            order.id, order.total, amount, currency,
+            order.id, expected_usd, amount, currency,
         )
         return
 
@@ -128,18 +148,24 @@ async def _handle_capture_completed(resource: dict, db: AsyncSession, redis: aio
     payment.status = PaymentStatus.COMPLETED.value
     payment.result_code = "COMPLETED"
     payment.provider_transaction_id = capture_id
+    payer = resource.get("payer") or {}
+    if payer.get("payer_id"):
+        payment.payer_id = payer["payer_id"]
     await db.commit()
 
 
 async def _handle_capture_denied(resource: dict, db: AsyncSession):
-    paypal_order_id = (
-        resource.get("supplementary_data", {}).get("related_ids", {}).get("order_id")
-    )
-    if not paypal_order_id:
+    ids = _get_payment_where(resource)
+    if not ids:
         return
+    paypal_order_id, capture_id = ids
+
     stmt = select(Payment).where(
         Payment.provider == "paypal",
-        Payment.provider_transaction_id == paypal_order_id,
+        or_(
+            Payment.provider_transaction_id == paypal_order_id,
+            Payment.provider_transaction_id == capture_id,
+        ),
     )
     res = await db.execute(stmt)
     payment = res.scalar_one_or_none()
@@ -150,4 +176,33 @@ async def _handle_capture_denied(resource: dict, db: AsyncSession):
 
 
 async def _handle_refund(resource: dict, db: AsyncSession):
-    logger.warning("PayPal refund webhook received: %s", resource.get("id"))
+    """Apply a refund state to the matching payment for reconciliation."""
+    capture_id = resource.get("id")
+    if not capture_id:
+        logger.error("PayPal refund webhook missing capture id: %s", resource)
+        return
+
+    ids = _get_payment_where(resource)
+    paypal_order_id = ids[0] if ids else None
+
+    stmt = select(Payment).where(
+        Payment.provider == "paypal",
+        or_(
+            Payment.provider_transaction_id == capture_id,
+            Payment.provider_transaction_id == paypal_order_id,
+        ),
+    ).with_for_update()
+    res = await db.execute(stmt)
+    payment = res.scalar_one_or_none()
+    if not payment:
+        logger.error("No Payment row found for PayPal refund capture %s", capture_id)
+        return
+
+    refund_amount = resource.get("amount", {}).get("value")
+    payment.status = PaymentStatus.REFUNDED.value
+    payment.result_code = "REFUNDED"
+    await db.commit()
+    logger.warning(
+        "PayPal refund recorded payment=%s capture=%s amount=%s",
+        payment.id, capture_id, refund_amount,
+    )
