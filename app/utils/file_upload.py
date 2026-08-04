@@ -59,8 +59,52 @@ async def validate_upload_file(
     if upload is None or not getattr(upload, "filename", None):
         raise HTTPException(status_code=400, detail="Missing upload filename")
 
-    if upload.size is not None and upload.size > max_size_bytes:
-        raise HTTPException(status_code=400, detail="File too large")
+    # Extension allowlist (also rejects e.g. .svg, .html, .php).
+    _get_extension(upload.filename)
+
+    # Authoritative size enforcement. UploadFile.size is set from the client's
+    # Content-Length (attacker-controlled) and is frequently None for multipart
+    # uploads, so we stream the file and count bytes ourselves.
+    total = 0
+    while True:
+        chunk = await upload.read(65536)
+        if not chunk:
+            break
+        total += len(chunk)
+        if total > max_size_bytes:
+            await upload.seek(0)
+            raise HTTPException(
+                status_code=400,
+                detail=f"File too large (max {max_size_bytes // (1024 * 1024)}MB)",
+            )
+    await upload.seek(0)
+
+    # Magic-byte check (independent of the client-supplied MIME type).
+    detected_ext = await _detect_image_type(upload)
+    if detected_ext not in allowed_extensions:
+        raise HTTPException(status_code=400, detail="File content is not a valid image")
+
+    # Optional deeper MIME inspection when python-magic is installed.
+    await validate_mime_by_magic(upload)
+
+
+async def _detect_image_type(upload: UploadFile) -> Optional[str]:
+    """Detect image type from file signature bytes (no external deps).
+
+    Returns the detected extension ('.jpg', '.png', '.webp', '.gif') or None.
+    """
+    prefix = await upload.read(16)
+    await upload.seek(0)
+
+    if prefix.startswith(b"\xff\xd8\xff"):
+        return ".jpg"
+    if prefix.startswith(b"\x89PNG\r\n\x1a\n"):
+        return ".png"
+    if len(prefix) >= 12 and prefix[:4] == b"RIFF" and prefix[8:12] == b"WEBP":
+        return ".webp"
+    if prefix.startswith(b"GIF87a") or prefix.startswith(b"GIF89a"):
+        return ".gif"
+    return None
 
 
 async def _read_prefix(upload: UploadFile, n: int = 2048) -> bytes:
