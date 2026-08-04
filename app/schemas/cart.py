@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from uuid import UUID
 from decimal import Decimal
 from typing import Optional
@@ -19,4 +19,4 @@ class CartResponse(BaseModel):
 
 class CartItemUpdate(BaseModel):
     product_id: UUID
-    quantity: int  # Absolute quantity, not increment
+    quantity: int = Field(..., ge=0, le=999)  # Absolute quantity, not increment

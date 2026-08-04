@@ -116,13 +116,50 @@ async def remove_cart_item(
 async def merge_anonymous_cart(
     anonymous_cart: dict,
     current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
     redis: aioredis.Redis = Depends(get_redis)
 ):
-    """Merge anonymous cart with user cart after login"""
-    
+    """Merge anonymous cart with user cart after login.
+
+    SECURITY: client-supplied name/price/image are ignored. Each product is
+    re-fetched from the DB and quantities are capped, so cart prices always
+    mirror the authoritative catalog.
+    """
+    product_service = ProductService(db)
     cart_service = CartService(redis)
-    result = await cart_service.merge_carts(current_user.id, anonymous_cart)
-    
+
+    sanitized_items = []
+    for raw_item in anonymous_cart.get("items", []):
+        try:
+            product_id = UUID(str(raw_item.get("product_id") or ""))
+        except (ValueError, TypeError):
+            continue
+        try:
+            quantity = int(raw_item.get("quantity", 1))
+        except (ValueError, TypeError):
+            continue
+        if quantity <= 0:
+            continue
+        if quantity > 999:
+            quantity = 999
+
+        product = await product_service.get_product_by_id(product_id)
+        if not product or not product.is_active or product.stock <= 0:
+            continue
+        quantity = min(quantity, product.stock)
+
+        sanitized_items.append({
+            "product_id": str(product.id),
+            "name": product.name,
+            "price": float(product.price),
+            "quantity": quantity,
+            "image_url": product.image_url or "",
+            "origin": getattr(product, 'origin', '') or "",
+            "merchant_id": str(product.merchant_id) if getattr(product, 'merchant_id', None) else None,
+        })
+
+    result = await cart_service.merge_carts(current_user.id, {"items": sanitized_items})
+
     return {
         "success": True,
         "message": "Cart merged successfully",

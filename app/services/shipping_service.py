@@ -21,6 +21,15 @@ class ShippingRateOption:
     customs_tax_info: Optional[str] = None
 
 
+# Canonical carrier multipliers shared between rate quotes and authoritative
+# server-side shipping fee derivation at order time.
+CARRIER_MULTIPLIERS: Dict[str, Decimal] = {
+    "dhl": Decimal("1.00"),
+    "fedex": Decimal("1.05"),
+    "ups": Decimal("0.97"),
+}
+
+
 class ShippingService:
     """Shipping rate calculation service.
 
@@ -39,11 +48,7 @@ class ShippingService:
 
         # Simple carrier multipliers to make UI feel like "carrier choice".
         # Phase 2 will replace with real live quotes.
-        self._carrier_multipliers: Dict[str, Decimal] = {
-            "dhl": Decimal("1.00"),
-            "fedex": Decimal("1.05"),
-            "ups": Decimal("0.97"),
-        }
+        self._carrier_multipliers: Dict[str, Decimal] = dict(CARRIER_MULTIPLIERS)
 
         # Simple ETA presets (days)
         self._carrier_etas_days: Dict[str, int] = {

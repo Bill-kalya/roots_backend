@@ -193,13 +193,20 @@ class OrderService:
         
         if not cart_items:
             raise ValueError("Cannot create order with empty cart")
-        
+
+        # SECURITY: never trust client/cart-supplied prices. Re-derive the
+        # authoritative price (and existence/activity/quantity) from the DB.
+        cart_items = await self._authoritative_cart_items(cart_items)
+
+        # SECURITY: derive the shipping fee server-side from delivery info.
+        shipping_fee = await self._derive_shipping_fee(order_data.delivery)
+
         # Calculate totals
         subtotal = sum(
-            Decimal(str(item["price"])) * item["quantity"] 
+            Decimal(str(item["price"])) * item["quantity"]
             for item in cart_items
         )
-        total = subtotal + order_data.shipping_fee
+        total = subtotal + shipping_fee
         
         # Generate order ID
         order_id = uuid4()
@@ -225,7 +232,7 @@ class OrderService:
                 user_id=user_id,
                 status=OrderStatus.PENDING,
                 subtotal=subtotal,
-                shipping_fee=order_data.shipping_fee,
+                shipping_fee=shipping_fee,
                 total=total
             )
             
@@ -271,6 +278,95 @@ class OrderService:
             await self.db.rollback()
             raise e
     
+    async def _authoritative_cart_items(self, cart_items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Re-derive product price/availability from the DB. Client prices are never trusted."""
+        product_ids = []
+        for item in cart_items:
+            try:
+                product_ids.append(UUID(str(item["product_id"])))
+            except (ValueError, TypeError):
+                raise ValueError(json.dumps({
+                    "code": "INVALID_PRODUCT_ID",
+                    "product_id": item.get("product_id"),
+                }))
+        if not product_ids:
+            raise ValueError("Cannot create order with empty cart")
+
+        result = await self.db.execute(
+            select(Product).where(Product.id.in_(product_ids))
+        )
+        products = {str(p.id): p for p in result.scalars().all()}
+
+        authoritative = []
+        for item in cart_items:
+            product = products.get(str(item["product_id"]))
+            if not product:
+                raise ValueError(json.dumps({
+                    "code": "PRODUCT_NOT_FOUND",
+                    "items": [{"product_id": item["product_id"]}],
+                }))
+            if not product.is_active:
+                raise ValueError(json.dumps({
+                    "code": "PRODUCT_UNAVAILABLE",
+                    "items": [{"product_id": str(product.id), "name": product.name}],
+                }))
+            if item["quantity"] <= 0:
+                raise ValueError(json.dumps({
+                    "code": "INVALID_QUANTITY",
+                    "items": [{"product_id": str(product.id)}],
+                }))
+            authoritative.append({
+                **item,
+                "name": product.name,
+                "price": float(product.price),
+                "image_url": product.image_url or item.get("image_url", ""),
+                "origin": getattr(product, "origin", "") or item.get("origin", ""),
+                "merchant_id": str(product.merchant_id) if getattr(product, "merchant_id", None) else None,
+            })
+        return authoritative
+
+    async def _derive_shipping_fee(self, delivery: Optional[Dict[str, Any]]) -> Decimal:
+        """Derive the authoritative shipping fee from delivery info + ShippingZone."""
+        from app.services.shipping_service import CARRIER_MULTIPLIERS
+        from app.models.shipping_zone import ShippingZone
+
+        if not delivery:
+            return Decimal("0.00")
+
+        country = str(delivery.get("country") or "").strip().lower()
+        if not country or country in {"kenya", "ke"}:
+            return Decimal("0.00")
+
+        zone_res = await self.db.execute(
+            select(ShippingZone).where(ShippingZone.country_code == country.upper())
+        )
+        zone = zone_res.scalar_one_or_none()
+        if not zone:
+            raise ValueError(json.dumps({
+                "code": "NO_SHIPPING_ZONE",
+                "country": country,
+            }))
+
+        pkg = delivery.get("package") or {}
+        try:
+            weight = Decimal(str(pkg.get("weight_kg") or "0.5"))
+        except Exception:
+            weight = Decimal("0.5")
+        fragile = bool(pkg.get("fragile"))
+
+        base = Decimal(str(zone.base_rate))
+        per_kg = Decimal(str(zone.per_kg_rate))
+        internal_rate = base + (per_kg * weight)
+        if fragile:
+            internal_rate = internal_rate * Decimal("1.15")
+
+        multiplier = CARRIER_MULTIPLIERS.get(
+            str(delivery.get("carrier") or "").lower(),
+            Decimal("1.00"),
+        )
+
+        return (internal_rate * multiplier).quantize(Decimal("0.01"))
+
     async def confirm_payment(self, order_id: UUID, payment_intent_id: str) -> Order:
         """Confirm payment and commit inventory"""
 
