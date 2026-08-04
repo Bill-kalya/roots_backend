@@ -521,6 +521,27 @@ class OrderService:
             "items": items
         }
 
+    async def get_order_with_items_for_user(self, order_id: UUID, user_id: UUID) -> Optional[Dict[str, Any]]:
+        """Get an order with items only if it belongs to the given user.
+
+        Returns None (404) for orders owned by someone else so existence
+        of other users' orders is not disclosed.
+        """
+        query = select(Order).where(Order.id == order_id, Order.user_id == user_id)
+        result = await self.db.execute(query)
+        order = result.scalar_one_or_none()
+        if not order:
+            return None
+
+        item_query = select(OrderItem).where(OrderItem.order_id == order_id)
+        item_result = await self.db.execute(item_query)
+        items = item_result.scalars().all()
+
+        return {
+            "order": order,
+            "items": items
+        }
+
 # Background task for expired orders
 async def process_expired_orders():
     """Background task to process expired pending orders"""

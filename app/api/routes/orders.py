@@ -163,25 +163,22 @@ async def get_order(
     db: AsyncSession = Depends(get_db),
     redis: aioredis.Redis = Depends(get_redis)
 ):
-    """Get specific order by ID"""
+    """Get specific order by ID (owner or admin only)."""
     order_service = OrderService(db, redis)
-    order_with_items = await order_service.get_order_with_items(order_id)
-    
+
+    if current_user.is_admin:
+        order_with_items = await order_service.get_order_with_items(order_id)
+    else:
+        order_with_items = await order_service.get_order_with_items_for_user(order_id, current_user.id)
+
     if not order_with_items:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Order not found"
         )
-    
+
     order = order_with_items["order"]
-    
-    # Check ownership (allow admin to view any order)
-    if str(order.user_id) != str(current_user.id) and not current_user.is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied"
-        )
-    
+
     return OrderResponse(
         id=order.id,
         user_id=order.user_id,
