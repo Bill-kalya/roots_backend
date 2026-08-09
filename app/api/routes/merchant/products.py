@@ -15,6 +15,7 @@ from app.schemas.product import ProductResponse
 from app.services.product_service import ProductService
 from app.core.config import settings
 from app.utils.file_upload import save_upload_image, validate_upload_file
+from app.utils.image_url import rewrite_image_cdn
 import json
 
 
@@ -144,7 +145,16 @@ async def create_product(
     await db.commit()
     await db.refresh(new_product)
 
-    return ProductResponse.model_validate(new_product)
+    return _rewrite_product_urls(ProductResponse.model_validate(new_product))
+
+
+def _rewrite_product_urls(product: ProductResponse) -> ProductResponse:
+    """Rewrite Cloudinary URLs to the configured CDN CNAME in responses."""
+    if product.image_url:
+        product.image_url = rewrite_image_cdn(product.image_url)
+    if product.gallery:
+        product.gallery = [rewrite_image_cdn(g) for g in product.gallery if g]
+    return product
 
 
 @router.get("", response_model=List[ProductResponse])
@@ -158,7 +168,7 @@ async def get_merchant_products(
     products, _ = await service.get_merchant_products(
         merchant_id=current_user.id
     )
-    return [ProductResponse.model_validate(p) for p in products]
+    return [_rewrite_product_urls(ProductResponse.model_validate(p)) for p in products]
 
 
 @router.put("/{product_id}", response_model=ProductResponse)
@@ -229,7 +239,7 @@ async def update_merchant_product(
     await db.commit()
     await db.refresh(product)
 
-    return ProductResponse.model_validate(product)
+    return _rewrite_product_urls(ProductResponse.model_validate(product))
 
 
 @router.delete("/{product_id}")

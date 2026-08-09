@@ -6,6 +6,7 @@ from app.services.product_service import ProductService
 from app.schemas.product import ProductListResponse, ProductResponse
 from app.schemas.common import PaginationParams
 from app.core.dependencies import get_redis
+from app.utils.image_url import rewrite_image_cdn
 from uuid import UUID
 import json
 import re
@@ -14,15 +15,15 @@ import re
 def _normalize_image_url(image_url: str) -> str:
     """Normalize image_url for the frontend.
 
-    - Cloudinary URLs should be returned untouched.
+    - Cloudinary URLs should be returned untouched (or rewritten to the CDN CNAME).
     - Legacy local URLs should be normalized to /uploads/<file>.
     """
     if not image_url:
         return ""
 
-    # ✅ Cloudinary URLs — return as-is
+    # ✅ Cloudinary URLs — rewrite to CDN CNAME if configured, otherwise as-is
     if image_url.startswith("https://res.cloudinary.com"):
-        return image_url
+        return rewrite_image_cdn(image_url)
 
 
 

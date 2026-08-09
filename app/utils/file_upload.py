@@ -166,12 +166,18 @@ async def save_upload_image(
         import cloudinary.uploader
 
         # Configure once per process
-        cloudinary.config(
-            cloud_name=settings.CLOUDINARY_CLOUD_NAME,
-            api_key=settings.CLOUDINARY_API_KEY,
-            api_secret=settings.CLOUDINARY_API_SECRET,
-            secure=True,
-        )
+        config: dict = {
+            "cloud_name": settings.CLOUDINARY_CLOUD_NAME,
+            "api_key": settings.CLOUDINARY_API_KEY,
+            "api_secret": settings.CLOUDINARY_API_SECRET,
+            "secure": True,
+        }
+        cname = (settings.CLOUDINARY_CDN_CNAME or "").strip().rstrip("/")
+        if cname:
+            # Serve media from the custom CDN CNAME (DNS must point at res.cloudinary.com)
+            config["cname"] = cname
+            config["secure_cname"] = True
+        cloudinary.config(**config)
 
 
         filename = generate_safe_filename(upload.filename)

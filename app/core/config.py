@@ -179,6 +179,11 @@ class Settings(BaseSettings):
     CLOUDINARY_CLOUD_NAME: str
     CLOUDINARY_API_KEY: str
     CLOUDINARY_API_SECRET: str
+    # Custom CDN CNAME for media delivery (e.g. "cdn.shoproots.africa").
+    # Point a DNS CNAME at res.cloudinary.com and set this to serve image URLs
+    # from your own domain (helps bypass regional routing/ISP issues).
+    # Empty string disables it and falls back to res.cloudinary.com.
+    CLOUDINARY_CDN_CNAME: str = ""
 
     # =========================================================================
 
